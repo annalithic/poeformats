@@ -13,14 +13,32 @@ namespace PoeTerrain.Util {
         public static int ReadLineInt(this TextReader r) {
             return int.Parse(r.ReadLine());
         }
+
+        public static int ReadValueInt(this TextReader r) {
+            string line = r.ReadLine();
+            return int.Parse(line.Substring(line.LastIndexOf(' ') + 1));
+        }
         public static string ReadLineString(this TextReader r) {
             return r.ReadLine().Trim('\"');
         }
+
+        public static string ReadValueString(this TextReader r) {
+            string line = r.ReadLine();
+            return line.Substring(line.IndexOf(' ') + 1).Trim('\"');
+        }
+
 
         public static void ReadLineInt(this TextReader r, out int a, out int b) {
             string[] words = r.ReadLine().Split(' ');
             a = int.Parse(words[0]); b = int.Parse(words[1]);
         }
+
+        public static void ReadValueInt(this TextReader r, out int a, out int b) {
+            string[] words = r.ReadLine().Split(' ');
+            a = int.Parse(words[words.Length - 2]); b = int.Parse(words[words.Length - 1]);
+        }
+
+
 
         public static string[] SplitQuotes(this string s) {
             List<string> newWords = new List<string>();

@@ -25,9 +25,13 @@ namespace PoeTerrain {
         public int format58unk;
         public BBox bbox;
 
-        public TgmFSData(BinaryReader r, bool includeUnk) {
+        public TgmFSData(BinaryReader r, int version, bool includeUnk) {
             i = r.ReadInt16();
-            format58unk = includeUnk ? r.ReadInt32() : 0;
+            format58unk = 0;
+            if (includeUnk) {
+                if (version >= 13) format58unk = r.ReadInt32();
+                else if (version >= 10) format58unk = r.ReadUInt16();
+            }
             bbox = r.ReadBBox();
         }
     }
@@ -94,7 +98,7 @@ namespace PoeTerrain {
                 meshes[i].Read(r, format);
             }
             for (int i = 0; i < faceSets.Length; i++) {
-                faceSets[i] = new TgmFSData(r, version >= 13 && !ground);
+                faceSets[i] = new TgmFSData(r, version, !ground);
             }
         }
     }
@@ -118,6 +122,7 @@ namespace PoeTerrain {
         public Tgm(string path) {
             filename = Path.GetFileNameWithoutExtension(path);
             
+            /*
             string possibleColRow = filename.Substring(filename.LastIndexOf('_') + 1);
             if (possibleColRow.StartsWith('c')) {
                 var colrow = possibleColRow.Split('r');
@@ -127,7 +132,7 @@ namespace PoeTerrain {
                     Console.WriteLine($" {col} {row}");
                 }
             }
-            
+            */
 
             using(BinaryReader r = new BinaryReader(File.OpenRead(path))) {
                 version = r.ReadByte();
@@ -172,5 +177,51 @@ namespace PoeTerrain {
                 }
             }
         }
+
+        public void ToObj(string[] fsNames, int x, int y, string mtlName) {
+            int vertCount = 1;
+            using (TextWriter w = new StreamWriter(File.Open(filename + ".obj", FileMode.Create))) {
+                w.WriteLine("mtllib " + mtlName);
+                
+                for (int i = 0; i < model.meshes.Length; i++) {
+
+                    for (int vert = 0; vert < model.meshes[i].verts.Length; vert++) {
+                        w.WriteLine($"v {model.meshes[i].verts[vert].x / 100 + 2.5 * x} {model.meshes[i].verts[vert].z / -100} {model.meshes[i].verts[vert].y / 100 - 2.5 * y}");
+                    }
+
+                    string name = fsNames[0];
+                    w.WriteLine($"o {filename}_{name}");
+                    w.WriteLine("usemtl " + name);
+                    for (int fs = 0; fs < model.meshes[i].fsOffsets.Length; fs++) {
+                        if(fsNames[fs] != name) {
+                            name = fsNames[fs];
+                            w.WriteLine($"o {filename}_{name}");
+                            w.WriteLine("usemtl " + name);
+                        }
+                        int offset = model.meshes[i].fsOffsets[fs];
+                        for (int idx = 0; idx < model.meshes[i].fsSizes[fs]; idx += 3) {
+                            w.WriteLine($"f {model.meshes[i].idx[idx + offset] + vertCount} {model.meshes[i].idx[idx + offset + 1] + vertCount} {model.meshes[i].idx[idx + offset + 2] + vertCount}");
+                        }
+                    }
+                    vertCount += model.meshes[i].verts.Length;
+                    break; //we don't need lods
+                }
+                
+                
+                for (int i = 0; i < groundModel.meshes.Length; i++) {
+                    w.WriteLine($"o {filename}_ground_{i}");
+                    w.WriteLine("usemtl annalithicground");
+                    for (int vert = 0; vert < groundModel.meshes[i].verts.Length; vert++) {
+                        w.WriteLine($"v {groundModel.meshes[i].verts[vert].x / 100 + 2.5 * x} {groundModel.meshes[i].verts[vert].z / -100} {groundModel.meshes[i].verts[vert].y / 100 - 2.5 * y}");
+                    }
+                    for (int idx = 0; idx < groundModel.meshes[i].idx.Length; idx += 3) {
+                        w.WriteLine($"f {groundModel.meshes[i].idx[idx] + vertCount} {groundModel.meshes[i].idx[idx + 1] + vertCount} {groundModel.meshes[i].idx[idx + 2] + vertCount}");
+                    }
+                    vertCount += groundModel.meshes[i].verts.Length;
+                }
+                
+            }
+        }
+
     }
 }
