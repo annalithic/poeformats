@@ -3,6 +3,12 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace PoeTerrain.Util {
+    public static class BinaryReaderEx {
+        public static BBox ReadBBox(this BinaryReader r) {
+            return new BBox() { x1 = r.ReadSingle(), x2 = r.ReadSingle(), y1 = r.ReadSingle(), y2 = r.ReadSingle(), z1 = r.ReadSingle(), z2 = r.ReadSingle() };
+        }
+    }
+
     public static class TextReaderEx {
         public static int ReadLineInt(this TextReader r) {
             return int.Parse(r.ReadLine());
