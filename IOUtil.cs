@@ -18,6 +18,22 @@ namespace PoeTerrain.Util {
             string line = r.ReadLine();
             return int.Parse(line.Substring(line.LastIndexOf(' ') + 1));
         }
+
+        public static int ReadValueInt(this TextReader r, string assertVal) {
+            string[] words = r.ReadLine().Trim().Split();
+            if (words[0] != assertVal) 
+                Console.WriteLine($"ASSERTION FAILED [{words[0]}] != [{assertVal}]");
+            return int.Parse(words[words.Length - 1]);
+        }
+
+        public static float[] ReadValueBbox(this TextReader r, string assertVal) {
+            var words = r.ReadLine().Trim().Split();
+            if (words[0] != assertVal) Console.WriteLine($"ASSERTION FAILED {words[0]} != {assertVal}");
+            float[] bbox = new float[6];
+            for (int i = 0; i < bbox.Length; i++) bbox[i] = float.Parse(words[i + 1]);
+            return bbox;
+        }
+
         public static string ReadLineString(this TextReader r) {
             return r.ReadLine().Trim('\"');
         }
@@ -27,6 +43,11 @@ namespace PoeTerrain.Util {
             return line.Substring(line.IndexOf(' ') + 1).Trim('\"');
         }
 
+        public static string ReadValueString(this TextReader r, string assertVal) {
+            var words = r.ReadLine().Trim().SplitQuotes();
+            if (words[0] != assertVal) Console.WriteLine($"ASSERTION FAILED {words[0]} != {assertVal}");
+            return words[words.Length - 1].Trim('"');
+        }
 
         public static void ReadLineInt(this TextReader r, out int a, out int b) {
             string[] words = r.ReadLine().Split(' ');
