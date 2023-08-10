@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace PoeTerrain {
+namespace PoeFormats {
     internal static class ooz {
 
         [DllImport("libooz.dll", CallingConvention = CallingConvention.Cdecl)]

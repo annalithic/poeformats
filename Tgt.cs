@@ -1,8 +1,8 @@
-﻿using PoeTerrain.Util;
+﻿using PoeFormats.Util;
 using System.Diagnostics.Metrics;
 using System.IO;
 
-namespace PoeTerrain {
+namespace PoeFormats {
     public class Tgt {
         public string filename;
         string basePath;

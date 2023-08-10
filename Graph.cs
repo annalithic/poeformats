@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using PoeTerrain.Util;
+using PoeFormats.Util;
 
-namespace PoeTerrain {
+namespace PoeFormats {
     public class Graph {
 
         public string path;

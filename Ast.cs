@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace PoeTerrain {
+namespace PoeFormats {
 
     public struct AstBone {
         public byte sibling;

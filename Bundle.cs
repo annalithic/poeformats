@@ -1,7 +1,7 @@
 ﻿using System.IO;
 
 
-namespace PoeTerrain {
+namespace PoeFormats {
     internal class Bundle {
         public static byte[] DecompressBundle(BinaryReader r) {
             int uncompressedSize = r.ReadInt32();

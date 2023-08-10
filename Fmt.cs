@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
-using PoeTerrain.Util;
+using PoeFormats.Util;
 using System.Text;
 
-namespace PoeTerrain {
+namespace PoeFormats {
     public class Fmt : PoeMeshOld {
         byte version;
 

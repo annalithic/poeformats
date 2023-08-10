@@ -1,7 +1,7 @@
-﻿using PoeTerrain.Util;
+﻿using PoeFormats.Util;
 using System;
 
-namespace PoeTerrain {
+namespace PoeFormats {
     public class Aoc {
         public int version;
         public string skeleton;

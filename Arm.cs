@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
-using PoeTerrain.Util;
-namespace PoeTerrain {
+using PoeFormats.Util;
+namespace PoeFormats {
     public class Arm {
         public int version;
 

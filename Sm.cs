@@ -1,7 +1,7 @@
-﻿using PoeTerrain.Util;
+﻿using PoeFormats.Util;
 using System.IO;
 
-namespace PoeTerrain {
+namespace PoeFormats {
     public class Sm {
         public int version;
         public string smd;

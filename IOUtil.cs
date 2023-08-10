@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PoeTerrain.Util {
+namespace PoeFormats.Util {
     public static class BinaryReaderEx {
         public static void Seek(this BinaryReader r, int count) { r.BaseStream.Seek(count, SeekOrigin.Current); }
 

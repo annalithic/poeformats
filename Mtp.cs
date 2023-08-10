@@ -2,7 +2,7 @@
 using System.Reflection.Metadata.Ecma335;
 using ImageMagick;
 
-namespace PoeTerrain {
+namespace PoeFormats {
     struct MinimapImage {
         public string filename;
         public int nameOffset;

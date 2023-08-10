@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
-using PoeTerrain.Util;
+using PoeFormats.Util;
 
-namespace PoeTerrain {
+namespace PoeFormats {
 
 
     public class BoneWeightSortable : IComparable<BoneWeightSortable> {

@@ -1,9 +1,9 @@
-﻿using PoeTerrain.Util;
+﻿using PoeFormats.Util;
 using System;
 using System.IO;
 using System.Reflection.PortableExecutable;
 
-namespace PoeTerrain {
+namespace PoeFormats {
     public class Act {
         public string ao;
         public float movementSpeed;
