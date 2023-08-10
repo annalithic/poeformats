@@ -7,12 +7,12 @@ namespace PoeTerrain {
         public float x1, x2, y1, y2, z1, z2;
     }
 
-    public struct TgmVert {
+    public struct PoeVert {
         public float x, y, z;
 
         static Dictionary<int, int> tgmVertEndSizes = new Dictionary<int, int>() { { 48, 8 }, { 56, 12 }, { 58, 16 } };
 
-        public TgmVert(BinaryReader r, int format) {
+        public PoeVert(BinaryReader r, int format) {
             x = r.ReadSingle(); 
             y = r.ReadSingle(); 
             z = r.ReadSingle(); 
@@ -36,16 +36,16 @@ namespace PoeTerrain {
         }
     }
 
-    public class TgmMesh {
-        public TgmVert[] verts;
+    public class PoeMesh {
+        public PoeVert[] verts;
         public int[] idx;
         public int[] fsOffsets;
         public int[] fsSizes;
 
 
-        public TgmMesh(int triCount, int vertCount, int fsCount) {
+        public PoeMesh(int triCount, int vertCount, int fsCount) {
             idx = new int[triCount * 3];
-            verts = new TgmVert[vertCount];
+            verts = new PoeVert[vertCount];
             fsOffsets = new int[fsCount];
             fsSizes = new int[fsCount];
         }
@@ -71,28 +71,28 @@ namespace PoeTerrain {
 
             //verts
             for(int i = 0; i <  verts.Length; i++ ) {
-                verts[i] = new TgmVert(r, format);
+                verts[i] = new PoeVert(r, format);
             }
         }
     }
 
 
-    public class TgmModel {
+    public class PoeModel {
         public short unk1;
-        public TgmMesh[] meshes;
+        public PoeMesh[] meshes;
         public int format;
         public TgmFSData[] faceSets;
 
 
-        public TgmModel(BinaryReader r, int version, bool ground) {
+        public PoeModel(BinaryReader r, int version, bool useFaceSetData = false, bool ground = false) {
             string magic = new string(r.ReadChars(4));
             if (magic != "DOLm") Console.WriteLine("MODEL MAGIC IS WRONG - " + magic);
             unk1 = r.ReadInt16();
-            meshes = new TgmMesh[r.ReadByte()];
+            meshes = new PoeMesh[r.ReadByte()];
             faceSets = new TgmFSData[r.ReadUInt16()];
             format = r.ReadInt32();
             for(int i = 0; i < meshes.Length; i++) {
-                meshes[i] = new TgmMesh(r.ReadInt32(), r.ReadInt32(), faceSets.Length);
+                meshes[i] = new PoeMesh(r.ReadInt32(), r.ReadInt32(), faceSets.Length);
             }
             for (int i = 0; i < meshes.Length; i++) {
                 meshes[i].Read(r, format);
@@ -113,8 +113,8 @@ namespace PoeTerrain {
         public short unk1;
         public short unk2;
         public short unk3;
-        public TgmModel model;
-        public TgmModel groundModel;
+        public PoeModel model;
+        public PoeModel groundModel;
 
         int col = 0;
         int row = 0;
@@ -146,8 +146,8 @@ namespace PoeTerrain {
                 unk1 = r.ReadInt16();
                 unk2 = r.ReadInt16();
                 unk3 = r.ReadInt16();
-                model = new TgmModel(r, version, false);
-                groundModel = new TgmModel(r, version, true);
+                model = new PoeModel(r, version, true, false);
+                groundModel = new PoeModel(r, version, true, true);
             }
         }
 

@@ -18,6 +18,11 @@ namespace PoeTerrain {
         public float[][] scaleKeys;
         public float[][] rotationKeys;
         public float[][] positionKeys;
+
+        public float[][] scaleKeys2;
+        public float[][] rotationKeys2;
+        public float[][] positionKeys2;
+
     }
 
     public class AstAnimation {
@@ -70,11 +75,11 @@ namespace PoeTerrain {
                 bones[i].name = new string(r.ReadChars(nameLength));
             }
 
-            for(int i = 0; i < lights.Length; i++) {
+            for (int i = 0; i < lights.Length; i++) {
                 lights[i] = new AstLight();
                 byte nameLength = r.ReadByte();
                 r.BaseStream.Seek(55, SeekOrigin.Current);
-                if(version > 8) r.BaseStream.Seek(4, SeekOrigin.Current);
+                if (version > 8) r.BaseStream.Seek(4, SeekOrigin.Current);
                 lights[i].name = new string(r.ReadChars(nameLength));
             }
 
@@ -84,7 +89,7 @@ namespace PoeTerrain {
                 animations[i].unk1 = r.ReadByte();
                 animations[i].framerate = r.ReadByte();
                 animations[i].unk2 = r.ReadByte();
-                if(version == 11) animations[i].version11a = r.ReadByte();
+                if (version == 11) animations[i].version11a = r.ReadByte();
                 byte nameLength = r.ReadByte();
                 int parentNameLength = 0;
                 if (version == 11) parentNameLength = r.ReadByte();
@@ -96,15 +101,19 @@ namespace PoeTerrain {
 
             byte[] payload = Bundle.DecompressBundle(r);
             using (BinaryReader r2 = new BinaryReader(new MemoryStream(payload))) {
-                for(int anim = 0; anim < animations.Length; ++anim) {
-                    for(int track = 0; track < animations[anim].tracks.Length; track++) {
+                for (int anim = 0; anim < animations.Length; ++anim) {
+                    for (int track = 0; track < animations[anim].tracks.Length; track++) {
                         animations[anim].tracks[track] = new AstTrack();
                         r2.BaseStream.Seek(1, SeekOrigin.Current); //unk
                         animations[anim].tracks[track].bone = r2.ReadInt32();
                         animations[anim].tracks[track].scaleKeys = new float[r2.ReadInt32()][];
                         animations[anim].tracks[track].rotationKeys = new float[r2.ReadInt32()][];
                         animations[anim].tracks[track].positionKeys = new float[r2.ReadInt32()][];
-                        r2.BaseStream.Seek(4 * 4, SeekOrigin.Current); //unks
+                        animations[anim].tracks[track].scaleKeys2 = new float[r2.ReadInt32()][];
+                        animations[anim].tracks[track].rotationKeys2 = new float[r2.ReadInt32()][];
+                        animations[anim].tracks[track].positionKeys2 = new float[r2.ReadInt32()][];
+                        if (version == 11) r2.BaseStream.Seek(4, SeekOrigin.Current);
+
                         for (int i = 0; i < animations[anim].tracks[track].scaleKeys.Length; i++) {
                             animations[anim].tracks[track].scaleKeys[i] = new float[4]; //time + vec3
                             for (int j = 0; j < animations[anim].tracks[track].scaleKeys[i].Length; j++) animations[anim].tracks[track].scaleKeys[i][j] = r2.ReadSingle();
@@ -117,6 +126,20 @@ namespace PoeTerrain {
                             animations[anim].tracks[track].positionKeys[i] = new float[4]; //time + vec3
                             for (int j = 0; j < animations[anim].tracks[track].positionKeys[i].Length; j++) animations[anim].tracks[track].positionKeys[i][j] = r2.ReadSingle();
                         }
+
+                        for (int i = 0; i < animations[anim].tracks[track].scaleKeys2.Length; i++) {
+                            animations[anim].tracks[track].scaleKeys2[i] = new float[4]; //time + vec3
+                            for (int j = 0; j < animations[anim].tracks[track].scaleKeys2[i].Length; j++) animations[anim].tracks[track].scaleKeys2[i][j] = r2.ReadSingle();
+                        }
+                        for (int i = 0; i < animations[anim].tracks[track].rotationKeys2.Length; i++) {
+                            animations[anim].tracks[track].rotationKeys2[i] = new float[5]; //time + quaternion
+                            for (int j = 0; j < animations[anim].tracks[track].rotationKeys2[i].Length; j++) animations[anim].tracks[track].rotationKeys2[i][j] = r2.ReadSingle();
+                        }
+                        for (int i = 0; i < animations[anim].tracks[track].positionKeys2.Length; i++) {
+                            animations[anim].tracks[track].positionKeys2[i] = new float[4]; //time + vec3
+                            for (int j = 0; j < animations[anim].tracks[track].positionKeys2[i].Length; j++) animations[anim].tracks[track].positionKeys2[i][j] = r2.ReadSingle();
+                        }
+
                     }
                 }
             }

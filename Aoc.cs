@@ -11,8 +11,10 @@ namespace PoeTerrain {
             using(TextReader reader = new StreamReader(path)) {
                 version = reader.ReadValueInt("version");
                 string line = reader.ReadLine();
-                while (line != "ClientAnimationController" && line != null) line = reader.ReadLine();
-                if (line == null) return;
+                while (line != "ClientAnimationController") {
+                    line = reader.ReadLine();
+                    if (line == null) return;
+                }
                 if (reader.ReadLine() != "{") Console.WriteLine("?????????????????? no ClientAnimationController block start");
                 while(line != "}") {
                     line = reader.ReadLine();
@@ -21,8 +23,10 @@ namespace PoeTerrain {
                         skeleton = words[words.Length - 1].Trim('"');
                     }
                 }
-                while (line != "SkinMesh" && line != null) line = reader.ReadLine();
-                if (line == null) return;
+                while (line != "SkinMesh") {
+                    line = reader.ReadLine();
+                    if (line == null) return;
+                }
                 if (reader.ReadLine() != "{") Console.WriteLine("?????????????????? no SkinMesh block start");
                 while (line != "}") {
                     line = reader.ReadLine();

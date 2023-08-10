@@ -44,7 +44,7 @@ namespace PoeTerrain.Util {
         }
 
         public static string ReadValueString(this TextReader r, string assertVal) {
-            var words = r.ReadLine().Trim().SplitQuotes();
+            var words = r.ReadLine().SplitQuotes();
             if (words[0] != assertVal) Console.WriteLine($"ASSERTION FAILED {words[0]} != {assertVal}");
             return words[words.Length - 1].Trim('"');
         }
@@ -62,6 +62,29 @@ namespace PoeTerrain.Util {
 
 
         public static string[] SplitQuotes(this string s) {
+            if(s.Length == 0) return new string[0];
+
+            bool inQuotes = false;
+            bool inWord = true;
+            List<string> words = new List<string>();
+            StringBuilder builder = new StringBuilder();
+            for(int i = 0; i < s.Length; i++) {
+                if (char.IsWhiteSpace(s[i]) && !inQuotes) {
+                    if (inWord) {
+                        inWord = false;
+                        words.Add(builder.ToString());
+                        builder.Clear();
+                    } else continue;
+                } else if (s[i] == '"') inQuotes = !inQuotes;
+                else {
+                    inWord = true;
+                    builder.Append(s[i]);
+                }
+            }
+            if (inWord) words.Add(builder.ToString());
+            return words.ToArray();
+
+                /*
             List<string> newWords = new List<string>();
             string[] words = s.Split(' ');
             for(int i = 0; i < words.Length; i++) {
@@ -76,6 +99,7 @@ namespace PoeTerrain.Util {
                 } else newWords.Add(words[i]);
             }
             return newWords.ToArray();
+                */
         }
     }
     public class WordReader {
