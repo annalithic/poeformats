@@ -1,7 +1,7 @@
 ﻿using PoeFormats.Util;
 using System;
 using System.IO;
-using System.Reflection.PortableExecutable;
+using System.Collections.Generic;
 
 namespace PoeFormats {
     public class Act {

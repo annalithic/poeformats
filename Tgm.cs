@@ -1,4 +1,5 @@
 ﻿using PoeFormats.Util;
+using System;
 using System.IO;
 
 namespace PoeFormats {

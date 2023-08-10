@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Reflection.Metadata.Ecma335;
+using System.IO;
 
 namespace PoeFormats {
     public struct MinimapImage {

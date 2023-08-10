@@ -1,6 +1,7 @@
 ﻿using PoeFormats.Util;
-using System.Diagnostics.Metrics;
+using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace PoeFormats {
     public class Tgt {
@@ -60,7 +61,7 @@ namespace PoeFormats {
 
                 for (int i = 0; i < materials.Length; i++) {
                     writer.WriteLine("newmtl " + Path.GetFileNameWithoutExtension(materials[i]));
-                    writer.WriteLine($"Kd {random.NextSingle()} {random.NextSingle()} {random.NextSingle()}");
+                    writer.WriteLine($"Kd {random.NextDouble()} {random.NextDouble()} {random.NextDouble()}");
                 }
             }
 

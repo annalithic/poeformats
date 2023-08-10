@@ -1,5 +1,6 @@
 ﻿using PoeFormats.Util;
 using System;
+using System.IO;
 
 namespace PoeFormats {
     public class Aoc {
