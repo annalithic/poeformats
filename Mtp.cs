@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Reflection.Metadata.Ecma335;
-using ImageMagick;
 
 namespace PoeFormats {
-    struct MinimapImage {
+    public struct MinimapImage {
         public string filename;
         public int nameOffset;
         public byte orientation;
@@ -34,9 +33,9 @@ namespace PoeFormats {
     }
 
     public class Mtp {
-        string path;
-        MinimapImage[] images;
-        string names;
+        public string path;
+        public MinimapImage[] images;
+        public string names;
 
         public Mtp(string path) {
             this.path = path;
@@ -59,41 +58,5 @@ namespace PoeFormats {
             }
 
         }
-
-        public void PrintBoxImage() {
-            MagickImage image = new MagickImage(MagickColors.White, 4096, 4096);
-            foreach(MinimapImage i in images) {
-                string writeVal = $"{i.filename}\n{i.orientation}\n{i.unk2} {i.unk3} {i.unk4}\n{i.height}\n{i.width}\n{i.leftPadding}";
-                image.Draw(new Drawables()
-                    .FillColor(MagickColors.Transparent)
-                    .StrokeColor(MagickColors.GreenYellow)
-                    .StrokeWidth(2)
-                    .Rectangle(i.originX - i.leftPadding, i.originY - i.topPadding, i.originX - i.leftPadding + i.height, i.originY - i.topPadding + i.height));
-            }
-            image.Write(Path.GetFileNameWithoutExtension(path) + ".png");
-        }
-
-        public void PrintValueImage() {
-            MagickImage image = new MagickImage(MagickColors.White, 4096, 4096);
-            foreach (MinimapImage i in images) {
-                string writeVal = $"{i.filename}\n{i.orientation}\n{i.unk2} {i.unk3} {i.unk4}\n{i.height}\n{i.width}\n{i.leftPadding}";
-                image.Draw(new Drawables().FillColor(MagickColors.YellowGreen).FontPointSize(16).Gravity(Gravity.Southwest).TextAlignment(TextAlignment.Center).Text(i.originX * 2, i.originY * 2, writeVal));
-            }
-            image.Write(Path.GetFileNameWithoutExtension(path) + ".png");
-        }
-
-        public void WriteImages(string outputFolder) {
-            MagickImage image = File.Exists(path.Replace(".mtp", ".png")) ? new MagickImage(path.Replace(".mtp", ".png")) : new MagickImage(path.Replace(".mtp", ".dds"));
-            foreach(MinimapImage i in images) {
-                MagickImage i2 = new MagickImage(image);
-                i2.Crop(new MagickGeometry((int)(i.originX - i.leftPadding), (int)(i.originY - i.topPadding), i.width * 40, i.height));
-                i2.RePage();
-                string filename = $"{i.filename.Substring(0, i.filename.Length - 4)}_{i.orientation}.png";
-                string filePath = Path.Combine(outputFolder, filename);
-                if (!Directory.Exists(Path.GetDirectoryName(filePath))) Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-                i2.Write(filePath);
-            }
-        }
-
     }
 }
