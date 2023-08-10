@@ -69,7 +69,7 @@ namespace PoeTerrain {
                 for (int x = 0; x < sizeX; x++) {
                     Tgm tgm = new Tgm(GetTgmPath(x, y));
                     var names = GetSubtileObjNames(x, y);
-                    Console.WriteLine($"({x},{y}) {names.Length} - {tgm.model.faceSets.Length}");
+                    Console.WriteLine($"({x},{y}) {names.Length} - {tgm.model.submeshCount}");
                     tgm.ToObj(names, x, y, filename + ".mtl");
                 }
             }
