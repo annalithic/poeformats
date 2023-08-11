@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PoeFormats {
     public class Act {
@@ -38,7 +39,9 @@ namespace PoeFormats {
                     line = r.ReadLine().Trim();
                 }
             }
-            foreach (string action in animations.Keys) {
+            string[] actions = animations.Keys.ToArray();
+
+            foreach (string action in actions) {
                 if (animations[action].StartsWith('@') && animations.ContainsKey(animations[action].Substring(1))) {
                     animations[action] = animations[animations[action].Substring(1)];
                 }
