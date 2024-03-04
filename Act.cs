@@ -34,6 +34,8 @@ namespace PoeFormats {
                         var words = line.SplitQuotes();
                         if(words.Length >= 3 && words[1] == "=") {
                             animations[words[0]] = words[2].TrimEnd(';');
+                            int idx = animations[words[0]].IndexOf(',');
+                            if (idx != -1) animations[words[0]] = animations[words[0]].Substring(0, idx);
                         }
                     }
                     line = r.ReadLine().Trim();
