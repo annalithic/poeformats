@@ -7,12 +7,12 @@ namespace PoeFormats {
 
 
 
-    public struct TgmFSData {
+    public struct TgmModelExtraData {
         public short i;
         public int format58unk;
         public BBox bbox;
 
-        public TgmFSData(BinaryReader r, int version, bool includeUnk) {
+        public TgmModelExtraData(BinaryReader r, int version, bool includeUnk) {
             i = r.ReadInt16();
             format58unk = 0;
             if (includeUnk) {
@@ -34,7 +34,9 @@ namespace PoeFormats {
         public short unk2;
         public short unk3;
         public PoeModel model;
+        public TgmModelExtraData[] modelExtraData;
         public PoeModel groundModel;
+        public TgmModelExtraData[] groundExtraData;
 
         int col = 0;
         int row = 0;
@@ -66,8 +68,19 @@ namespace PoeFormats {
                 unk1 = r.ReadInt16();
                 unk2 = r.ReadInt16();
                 unk3 = r.ReadInt16();
-                model = new PoeModel(r, version, false);
-                groundModel = new PoeModel(r, version, true);
+                model = new PoeModel(r);
+
+                modelExtraData = new TgmModelExtraData[model.meshCount];
+                for (int i = 0; i < model.meshCount; i++) {
+                    modelExtraData[i] = new TgmModelExtraData(r, version, true);
+                }
+
+                groundModel = new PoeModel(r);
+
+                groundExtraData = new TgmModelExtraData[model.meshCount];
+                for (int i = 0; i < model.meshCount; i++) {
+                    groundExtraData[i] = new TgmModelExtraData(r, version, false);
+                }
             }
         }
 

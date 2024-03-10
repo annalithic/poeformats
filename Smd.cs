@@ -51,25 +51,25 @@ namespace PoeFormats {
 
                     unk1 = r.ReadByte();
 
-                    model.submeshCount = r.ReadUInt16();
-                    mesh.submeshOffsets = new int[model.submeshCount];
-                    mesh.submeshSizes = new int[model.submeshCount];
+                    model.meshCount = r.ReadUInt16();
+                    mesh.submeshOffsets = new int[model.meshCount];
+                    mesh.submeshSizes = new int[model.meshCount];
 
                     int submeshNamesLength = r.ReadInt32();
                     bbox = r.ReadBBox();
                     if (version == 2) r.ReadInt32();
-                    mesh.submeshOffsets = new int[model.submeshCount];
-                    mesh.submeshSizes = new int[model.submeshCount];
-                    for(int i = 0; i < model.submeshCount; i++) {
+                    mesh.submeshOffsets = new int[model.meshCount];
+                    mesh.submeshSizes = new int[model.meshCount];
+                    for(int i = 0; i < model.meshCount; i++) {
                         r.ReadInt32(); //submesh name length?
                         mesh.submeshOffsets[i] = r.ReadInt32() * 3;
                         //mesh.submeshSizes[i] = r.ReadInt32();
                     }
                     //submesh sizes
-                    for(int i = 0; i < model.submeshCount - 1; i++) {
+                    for(int i = 0; i < model.meshCount - 1; i++) {
                         mesh.submeshSizes[i] = mesh.submeshOffsets[i + 1] - mesh.submeshOffsets[i];
                     }
-                    mesh.submeshSizes[model.submeshCount - 1] = mesh.idx.Length - mesh.submeshOffsets[model.submeshCount - 1];
+                    mesh.submeshSizes[model.meshCount - 1] = mesh.idx.Length - mesh.submeshOffsets[model.meshCount - 1];
 
 
                     //if(version == 2) unk2 = r.ReadInt32();

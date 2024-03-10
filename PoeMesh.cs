@@ -53,25 +53,43 @@ namespace PoeFormats {
             else for (int i = 0; i < idx.Length; i++) idx[i] = r.ReadUInt16();
 
 
-            boneWeights = new BoneWeightSortable[vertCount][];
+            if (vertexFormat >= 60) {
+                boneWeights = new BoneWeightSortable[vertCount][];
 
-            //TODO vertex format, tgm is broken
-            for(int i = 0; i < vertCount; i++) {
-                verts[i * 3] = r.ReadSingle();
-                verts[i * 3 + 1] = r.ReadSingle();
-                verts[i * 3 + 2] = r.ReadSingle();
-                r.BaseStream.Seek(8, SeekOrigin.Current);
-                uvs[i * 2] = r.ReadUInt16();
-                uvs[i * 2 + 1] = r.ReadUInt16();
-                boneWeights[i] = new BoneWeightSortable[4];
-                for (int weight = 0; weight < 4; weight++) {
-                    boneWeights[i][weight] = new BoneWeightSortable(r.ReadByte());
-                }
-                for (int weight = 0; weight < 4; weight++) {
-                    boneWeights[i][weight].weight = r.ReadByte();
-                }
+                //TODO vertex format, tgm is broken
+                for (int i = 0; i < vertCount; i++) {
+                    verts[i * 3] = r.ReadSingle();
+                    verts[i * 3 + 1] = r.ReadSingle();
+                    verts[i * 3 + 2] = r.ReadSingle();
+                    r.BaseStream.Seek(8, SeekOrigin.Current);
+                    uvs[i * 2] = r.ReadUInt16();
+                    uvs[i * 2 + 1] = r.ReadUInt16();
+                    boneWeights[i] = new BoneWeightSortable[4];
+                    for (int weight = 0; weight < 4; weight++) {
+                        boneWeights[i][weight] = new BoneWeightSortable(r.ReadByte());
+                    }
+                    for (int weight = 0; weight < 4; weight++) {
+                        boneWeights[i][weight].weight = r.ReadByte();
+                    }
 
+                }
+            } else if (vertexFormat >= 58) {
+                Console.WriteLine("NOT IMPLEMENTED VERTEX FORMAT " + vertexFormat.ToString());
+                //28 bytes
+            } else if (vertexFormat >= 56) {
+                for (int i = 0; i < vertCount; i++) {
+                    verts[i * 3] = r.ReadSingle();
+                    verts[i * 3 + 1] = r.ReadSingle();
+                    verts[i * 3 + 2] = r.ReadSingle();
+                    r.BaseStream.Seek(8, SeekOrigin.Current);
+                    uvs[i * 2] = r.ReadUInt16();
+                    uvs[i * 2 + 1] = r.ReadUInt16();
+                }
+            } else {
+                Console.WriteLine("NOT IMPLEMENTED VERTEX FORMAT " + vertexFormat.ToString());
+                //20 bytes
             }
+
 
         }
     }
@@ -80,29 +98,27 @@ namespace PoeFormats {
     public class PoeModel {
         public short unk1;
         public PoeMesh[] meshes;
-        public int submeshCount;
+        public int meshCount;
         public int vertexFormat;
-        public TgmFSData[] submeshes;
 
         public PoeModel() { }
 
-        public PoeModel(BinaryReader r, int tgmVersion = 0, bool ground = false) {
+        public PoeModel(BinaryReader r) {
+            Read(r);
+        }
+
+        public void Read(BinaryReader r) {
             string magic = new string(r.ReadChars(4));
             if (magic != "DOLm") Console.WriteLine("MODEL MAGIC IS WRONG - " + magic);
             unk1 = r.ReadInt16();
             meshes = new PoeMesh[r.ReadByte()];
-            submeshCount = r.ReadUInt16();
+            meshCount = r.ReadUInt16();
             vertexFormat = r.ReadInt32();
             for (int i = 0; i < meshes.Length; i++) {
-                meshes[i] = new PoeMesh(r.ReadInt32(), r.ReadInt32(), submeshCount);
+                meshes[i] = new PoeMesh(r.ReadInt32(), r.ReadInt32(), meshCount);
             }
             for (int i = 0; i < meshes.Length; i++) {
                 meshes[i].Read(r, vertexFormat);
-            }
-            if(tgmVersion != 0) {
-                for (int i = 0; i < submeshes.Length; i++) {
-                    submeshes[i] = new TgmFSData(r, tgmVersion, !ground);
-                }
             }
         }
     }

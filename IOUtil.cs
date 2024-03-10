@@ -10,6 +10,15 @@ namespace PoeFormats.Util {
         public static BBox ReadBBox(this BinaryReader r) {
             return new BBox() { x1 = r.ReadSingle(), x2 = r.ReadSingle(), y1 = r.ReadSingle(), y2 = r.ReadSingle(), z1 = r.ReadSingle(), z2 = r.ReadSingle() };
         }
+
+        public static string ReadWStringNullTerminated(this BinaryReader r, int capacity = 32) {
+            List<byte> bytes = new List<byte>();
+            while (r.PeekChar() != 0x00) {
+                bytes.Add(r.ReadByte());
+                bytes.Add(r.ReadByte());
+            }
+            return Encoding.Unicode.GetString(bytes.ToArray());
+        }
     }
 
     public static class TextReaderEx {
