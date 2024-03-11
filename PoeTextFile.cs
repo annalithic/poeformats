@@ -78,20 +78,20 @@ namespace PoeFormats {
 
         void ReadFile(string baseFolder, string path) {
             if (!File.Exists(Path.Combine(baseFolder, path))) {
-                Console.WriteLine(path + " DOES NOT EXIST");
+                //Console.WriteLine(path + " DOES NOT EXIST");
                 return;
             }
 
             string currentBlock = null;
 
             TextReader reader = new StreamReader(File.OpenRead(Path.Combine(baseFolder, path)));
-            Console.WriteLine(path);
+            //Console.WriteLine(path);
 
             string token = GetNextToken(reader);
             string prevToken = token;
             while (token != null) {
 
-                Console.WriteLine(prevToken + ", " + token);
+                //Console.WriteLine(prevToken + ", " + token);
 
 
                 if (keywords.Contains(token)) {
@@ -107,11 +107,11 @@ namespace PoeFormats {
                 } else if (token == "=") {
                     string value = GetNextToken(reader);
                     if (currentBlock == null) {
-                        Console.WriteLine($"VALUE {prevToken} = {value}");
+                        //Console.WriteLine($"VALUE {prevToken} = {value}");
                         values[prevToken] = value;
 
                     } else {
-                        Console.WriteLine($"VALUE {currentBlock}.{prevToken} = {value}");
+                        //Console.WriteLine($"VALUE {currentBlock}.{prevToken} = {value}");
                         blocks[currentBlock][prevToken] = value;
                     }
                 } else if (token == "{") {
@@ -151,7 +151,7 @@ namespace PoeFormats {
                 do {
                     c = reader.Read();
                     s.Append((char)c);
-                } while (c != '"');
+                } while (c != '"' && c != '\r'); //no multiline strings
                 return s.ToString().Trim('"');
             }
 

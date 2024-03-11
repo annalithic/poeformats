@@ -125,14 +125,14 @@ namespace PoeFormats {
                     string name = submeshNames[0];
                     w.WriteLine($"o {filename}_{name}");
                     w.WriteLine("usemtl " + name);
-                    for (int submesh = 0; submesh < model.meshes[i].submeshOffsets.Length; submesh++) {
+                    for (int submesh = 0; submesh < model.meshes[i].shapeOffsets.Length; submesh++) {
                         if(submeshNames[submesh] != name) {
                             name = submeshNames[submesh];
                             w.WriteLine($"o {filename}_{name}");
                             w.WriteLine("usemtl " + name);
                         }
-                        int offset = model.meshes[i].submeshOffsets[submesh];
-                        for (int idx = 0; idx < model.meshes[i].submeshSizes[submesh]; idx += 3) {
+                        int offset = model.meshes[i].shapeOffsets[submesh];
+                        for (int idx = 0; idx < model.meshes[i].shapeLengths[submesh]; idx += 3) {
                             w.WriteLine($"f {model.meshes[i].idx[idx + offset] + vertCount} {model.meshes[i].idx[idx + offset + 1] + vertCount} {model.meshes[i].idx[idx + offset + 2] + vertCount}");
                         }
                     }

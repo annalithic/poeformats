@@ -28,8 +28,8 @@ namespace PoeFormats {
         public float[] verts;
         public ushort[] uvs;
         public int[] idx;
-        public int[] submeshOffsets;
-        public int[] submeshSizes;
+        public int[] shapeOffsets;
+        public int[] shapeLengths;
         public BoneWeightSortable[][] boneWeights;
 
         public PoeMesh() {
@@ -40,14 +40,14 @@ namespace PoeFormats {
             verts = new float[vertCount * 3];
             uvs = new ushort[vertCount * 2];
             idx = new int[triCount * 3];
-            submeshOffsets = new int[submeshCount];
-            submeshSizes = new int[submeshCount];
+            shapeOffsets = new int[submeshCount];
+            shapeLengths = new int[submeshCount];
         }
 
         public void Read(BinaryReader r, int vertexFormat) {
-            for(int i = 0; i < submeshOffsets.Length; i++) {
-                submeshOffsets[i] = r.ReadInt32();
-                submeshSizes[i] = r.ReadInt32();
+            for(int i = 0; i < shapeOffsets.Length; i++) {
+                shapeOffsets[i] = r.ReadInt32();
+                shapeLengths[i] = r.ReadInt32();
             }
             if (vertCount > 65535) for (int i = 0; i < idx.Length; i++) idx[i] = r.ReadInt32();
             else for (int i = 0; i < idx.Length; i++) idx[i] = r.ReadUInt16();
@@ -92,9 +92,15 @@ namespace PoeFormats {
 
 
         }
+
+        public void SetShapeSizes() {
+            //submesh sizes
+            for (int i = 0; i < shapeOffsets.Length - 1; i++) {
+                shapeLengths[i] = shapeOffsets[i + 1] - shapeOffsets[i];
+            }
+            shapeLengths[shapeOffsets.Length - 1] = idx.Length - shapeOffsets[shapeOffsets.Length - 1];
+        }
     }
-
-
     public class PoeModel {
         public short unk1;
         public PoeMesh[] meshes;

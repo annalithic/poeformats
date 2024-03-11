@@ -56,14 +56,42 @@ namespace PoeFormats {
                         shapeNameIndex[i] = r.ReadInt32();
                         shapeMatIndex[i] = r.ReadInt32();
                     }
+                    for (int i = 0; i < unk1.Length; i++) {
+                        unk1[i] = new Unk1 {
+                            a = r.ReadByte(), b = r.ReadByte(), c = r.ReadByte(),
+                            d = r.ReadByte(), e = r.ReadByte(), f = r.ReadByte()
+                        };
+                    }
                 } else {
-                    Console.WriteLine("OLD FMT NOT IMPLEMENTED");
-                }
-                for (int i = 0; i < unk1.Length; i++) {
-                    unk1[i] = new Unk1 {
-                        a = r.ReadByte(), b = r.ReadByte(), c = r.ReadByte(),
-                        d = r.ReadByte(), e = r.ReadByte(), f = r.ReadByte()
-                    };
+                    if (version == 8) r.Seek(4);
+                    PoeMesh m = meshes[0];
+
+                    for (int i = 0; i < shapeCount; i++) {
+                        shapeNameIndex[i] = r.ReadInt32();
+                        shapeMatIndex[i] = r.ReadInt32();
+                        m.shapeOffsets[i] = r.ReadInt32();
+                    }
+                    m.SetShapeSizes();
+
+                    for (int i = 0; i < unk1.Length; i++) {
+                        unk1[i] = new Unk1 {
+                            a = r.ReadByte(), b = r.ReadByte(), c = r.ReadByte(),
+                            d = r.ReadByte(), e = r.ReadByte(), f = r.ReadByte()
+                        };
+                    }
+
+                    for (int i = 0; i < m.idx.Length; i++) {
+                        m.idx[i] = r.ReadUInt16();
+                    }
+
+                    for (int i = 0; i < m.vertCount; i++) {
+                        m.verts[i * 3] = r.ReadSingle();
+                        m.verts[i * 3 + 1] = r.ReadSingle();
+                        m.verts[i * 3 + 2] = r.ReadSingle();
+                        r.Seek(8);
+                        m.uvs[i * 2] = r.ReadUInt16();
+                        m.uvs[i * 2 + 1] = r.ReadUInt16();
+                    }
                 }
                 for (int i = 0; i < unk2.Length; i++) {
                     unk2[i] = new System.Numerics.Vector3(r.ReadSingle(), r.ReadSingle(), r.ReadSingle());
