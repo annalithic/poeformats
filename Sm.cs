@@ -9,6 +9,8 @@ namespace PoeFormats {
         public int[] materialCounts;
         public float[] bbox;
 
+        public Sm(string gamePath, string path) : this(Path.Combine(gamePath, path)) { }
+
         public Sm(string path) {
             using(TextReader r = new StreamReader(File.OpenRead(path), System.Text.Encoding.Unicode)) {
                 

@@ -27,6 +27,8 @@ namespace PoeFormats {
         public BBox bbox;
         public PoeModel model;
 
+        public Smd(string gamePath, string path) : this(Path.Combine(gamePath, path)) { }
+
         public Smd(string path) {
             using (BinaryReader r = new BinaryReader(File.OpenRead(path))) {
                 version = r.ReadByte();

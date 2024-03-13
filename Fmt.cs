@@ -27,6 +27,8 @@ namespace PoeFormats {
         public string[] shapeNames;
         public string[] shapeMaterials;
 
+        public Fmt(string gamePath, string path) : this(Path.Combine(gamePath, path)) { }
+
         public Fmt(string path) {
             using (BinaryReader r = new BinaryReader(File.OpenRead(path))) {
                 version = r.ReadByte();
