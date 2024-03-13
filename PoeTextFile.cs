@@ -27,8 +27,68 @@ namespace PoeFormats {
 
 
         //this doesnt work because some stuff needs to be in order - melee then, animation timings
-        public Dictionary<string, string> values;
-        public Dictionary<string, Dictionary<string, string>> blocks; 
+        class Block {
+            public List<string> keys;
+            public List<string> values;
+
+            public Block() {
+                keys = new List<string>();
+                values = new List<string>();
+            }
+
+            public void Add(string key, string value) {
+                keys.Add(key); values.Add(value);
+            }
+        }
+        Dictionary<string, Block> blocks;
+
+        public List<(string, string)> AocGetSockets() {
+            List<(string, string)> sockets = new List<(string, string)>();
+            if (blocks.TryGetValue("ClientAnimationController", out Block block)) {
+                string socket = null;
+                for(int i = 0; i < block.keys.Count; i++) {
+                    string key = block.keys[i];
+                    if (key == "socket") socket = block.values[i];
+                    else if (key == "parent") sockets.Add( (socket, block.values[i]) );
+                }
+            }
+            return sockets;
+        }
+        
+        public List<string> GetList(string block, string key) {
+            List<string> list = new List<string>();
+            if(blocks.ContainsKey(block)) {
+                var blockObj = blocks[block];
+                for (int i = 0; i < blockObj.keys.Count; i++)
+                    if (blockObj.keys[i] == key)
+                        list.Add(blockObj.values[i]);
+            }
+            return list;
+        }
+
+        public bool TryGet(string block, string key, out string value) {
+            if (blocks.ContainsKey(block)) {
+                int i = blocks[block].keys.LastIndexOf(key);
+                if(i != -1) {
+                    value = blocks[block].values[i];
+                    return true;
+                }
+            }
+            value = null;
+            return false;
+        }
+
+        //lastindexof so children override parents
+        public string Get(string block, string value) {
+            if (!blocks.ContainsKey(block)) return null;
+            int i = blocks[block].keys.LastIndexOf(value);
+            if (i == -1) return null;
+            return blocks[block].values[i];
+        }
+
+        public string Get(string value) {
+            return Get("NULL", value);
+        }
 
         public static void DumpTokens(string path) {
             TextReader reader = new StreamReader(path);
@@ -42,8 +102,9 @@ namespace PoeFormats {
         public PoeTextFile(string baseFolder, string path) {
 
             this.path = path;
-            values = new Dictionary<string, string>();
-            blocks = new Dictionary<string, Dictionary<string, string>>();
+            blocks = new Dictionary<string, Block>();
+            blocks["NULL"] = new Block();
+
 
             ReadFile(baseFolder, path);
 
@@ -82,7 +143,7 @@ namespace PoeFormats {
                 return;
             }
 
-            string currentBlock = null;
+            string currentBlock = "NULL";
 
             TextReader reader = new StreamReader(File.OpenRead(Path.Combine(baseFolder, path)));
             //Console.WriteLine(path);
@@ -96,29 +157,19 @@ namespace PoeFormats {
 
                 if (keywords.Contains(token)) {
                     string value = GetNextToken(reader);
-                    if (currentBlock == null)
-                        values[token] = value;
-                    else
-                        blocks[currentBlock][token] = value;
+                    blocks[currentBlock].Add(token, value);
                     //read parents immediately, so values are overwritten?
                     if (token == "extends" && value != "nothing") {
                         ReadFile(baseFolder, value + Path.GetExtension(path));
                     }
                 } else if (token == "=") {
                     string value = GetNextToken(reader);
-                    if (currentBlock == null) {
-                        //Console.WriteLine($"VALUE {prevToken} = {value}");
-                        values[prevToken] = value;
-
-                    } else {
-                        //Console.WriteLine($"VALUE {currentBlock}.{prevToken} = {value}");
-                        blocks[currentBlock][prevToken] = value;
-                    }
+                    blocks[currentBlock].Add(prevToken, value);
                 } else if (token == "{") {
                     currentBlock = prevToken;
-                    if (!blocks.ContainsKey(prevToken)) blocks[prevToken] = new Dictionary<string, string>();
+                    if (!blocks.ContainsKey(prevToken)) blocks[prevToken] = new Block();
                 } else if (token == "}") {
-                    currentBlock = null;
+                    currentBlock = "NULL";
                 }
 
 

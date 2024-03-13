@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PoeFormats.Util;
+using System;
 using System.IO;
 
 namespace PoeFormats {
@@ -53,6 +54,17 @@ namespace PoeFormats {
             else for (int i = 0; i < idx.Length; i++) idx[i] = r.ReadUInt16();
 
 
+            //FORMAT BREAKDOWN:
+            //X, Y, Z: position
+            //N, T:    normals
+            //U, V:    uvs
+            //B, W:    bone weights
+
+            //60: XXXX YYYY ZZZZ NNNN TTTT UUVV BBBB WWWW
+            //58: XXXX YYYY ZZZZ NNNN TTTT UUVV ????
+            //57: XXXX YYYY ZZZZ NNNN TTTT UUVV UUVV
+            //56: XXXX YYYY ZZZZ NNNN TTTT UUVV
+
             if (vertexFormat >= 60) {
                 boneWeights = new BoneWeightSortable[vertCount][];
 
@@ -71,17 +83,33 @@ namespace PoeFormats {
                     for (int weight = 0; weight < 4; weight++) {
                         boneWeights[i][weight].weight = r.ReadByte();
                     }
-
                 }
-            } else if (vertexFormat >= 58) {
-                Console.WriteLine("NOT IMPLEMENTED VERTEX FORMAT " + vertexFormat.ToString());
-                //28 bytes
-            } else if (vertexFormat >= 56) {
+            } else if (vertexFormat >= 58) { 
                 for (int i = 0; i < vertCount; i++) {
                     verts[i * 3] = r.ReadSingle();
                     verts[i * 3 + 1] = r.ReadSingle();
                     verts[i * 3 + 2] = r.ReadSingle();
-                    r.BaseStream.Seek(8, SeekOrigin.Current);
+                    r.Seek(8);
+                    uvs[i * 2] = r.ReadUInt16();
+                    uvs[i * 2 + 1] = r.ReadUInt16();
+                    r.Seek(4);
+                }
+            } else if (vertexFormat == 57) { 
+                for (int i = 0; i < vertCount; i++) {
+                    verts[i * 3] = r.ReadSingle();
+                    verts[i * 3 + 1] = r.ReadSingle();
+                    verts[i * 3 + 2] = r.ReadSingle();
+                    r.Seek(8);
+                    uvs[i * 2] = r.ReadUInt16();
+                    uvs[i * 2 + 1] = r.ReadUInt16();
+                    r.Seek(4);
+                }
+            } else if (vertexFormat == 56) {
+                for (int i = 0; i < vertCount; i++) {
+                    verts[i * 3] = r.ReadSingle();
+                    verts[i * 3 + 1] = r.ReadSingle();
+                    verts[i * 3 + 2] = r.ReadSingle();
+                    r.Seek(8);
                     uvs[i * 2] = r.ReadUInt16();
                     uvs[i * 2 + 1] = r.ReadUInt16();
                 }
