@@ -71,7 +71,7 @@ namespace PoeFormats {
                     for (int i = 0; i < shapeCount; i++) {
                         shapeNameIndex[i] = r.ReadInt32();
                         shapeMatIndex[i] = r.ReadInt32();
-                        m.shapeOffsets[i] = r.ReadInt32();
+                        m.shapeOffsets[i] = r.ReadInt32() * 3;
                     }
                     m.SetShapeSizes();
 
