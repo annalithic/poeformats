@@ -65,6 +65,7 @@ namespace PoeFormats {
             //58: XXXX YYYY ZZZZ NNNN TTTT UUVV ????
             //57: XXXX YYYY ZZZZ NNNN TTTT UUVV UUVV
             //56: XXXX YYYY ZZZZ NNNN TTTT UUVV
+            //48: XXXX YYYY ZZZZ NNNN TTTT
 
             if(vertexFormat == 60 || vertexFormat == 61) {
                 boneWeights = new BoneWeightSortable[vertCount][];
@@ -76,9 +77,15 @@ namespace PoeFormats {
                 verts[i * 3 + 1] = r.ReadSingle();
                 verts[i * 3 + 2] = r.ReadSingle();
                 r.Seek(8);
-                uvs[i * 2] = r.ReadUInt16();
-                uvs[i * 2 + 1] = r.ReadUInt16();
-                if(vertexFormat == 57 || vertexFormat == 58) {
+
+                if(vertexFormat == 48) {
+                    uvs[i * 2] = 0;
+                    uvs[i * 2 + 1] = 0;
+                } else {
+                    uvs[i * 2] = r.ReadUInt16();
+                    uvs[i * 2 + 1] = r.ReadUInt16();
+                }
+                if (vertexFormat == 57 || vertexFormat == 58) {
                     r.Seek(4);
                 }
                 if(vertexFormat == 60 || vertexFormat == 61) {

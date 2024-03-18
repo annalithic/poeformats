@@ -11,7 +11,8 @@ namespace PoeFormats {
         static HashSet<string> colorTexNames = new HashSet<string> {
             "base_color_texture",
             "AlbedoTransparency_TEX",
-            "AlbedoSpecMask_TEX"
+            "AlbedoSpecMask_TEX",
+            "ColourHeight_TEX"
         };
 
         public class GraphInstance {

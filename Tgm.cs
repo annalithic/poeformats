@@ -77,10 +77,10 @@ namespace PoeFormats {
 
                 groundModel = new PoeModel(r);
 
-                groundExtraData = new TgmModelExtraData[model.meshCount];
-                for (int i = 0; i < model.meshCount; i++) {
-                    groundExtraData[i] = new TgmModelExtraData(r, version, false);
-                }
+                //groundExtraData = new TgmModelExtraData[model.meshCount];
+                //for (int i = 0; i < model.meshCount; i++) {
+                //    groundExtraData[i] = new TgmModelExtraData(r, version, false);
+                //}
             }
         }
 

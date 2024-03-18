@@ -14,15 +14,19 @@ namespace PoeFormats {
         public string[] materials;
         public int[][] subtileMaterialIndices;
 
-        public Tgt(string path) {
-            filename = Path.GetFileNameWithoutExtension(path);
-            basePath = path.Contains("\\Art\\") ? path.Substring(0, path.IndexOf("\\Art\\") + 1) : path.Substring(0, path.IndexOf("\\art\\") + 1);
 
-            using (TextReader r = new StreamReader(File.OpenRead(path), System.Text.Encoding.Unicode)) {
+
+        public Tgt(string gamePath, string path) {
+            filename = Path.GetFileNameWithoutExtension(path);
+            basePath = gamePath;
+            //basePath = path.Contains("\\Art\\") ? path.Substring(0, path.IndexOf("\\Art\\") + 1) : path.Substring(0, path.IndexOf("\\art\\") + 1);
+
+            using (TextReader r = new StreamReader(File.OpenRead(Path.Combine(basePath, path)), System.Text.Encoding.Unicode)) {
                 version = r.ReadValueInt();
                 r.ReadValueInt(out sizeX, out sizeY);
                 tileMeshRoot = r.ReadValueString();
-                groundMask = r.ReadValueString();
+                if(r.Peek() == 'G')
+                    groundMask = r.ReadValueString();
                 materials = new string[r.ReadValueInt()];
                 for(int i = 0; i < materials.Length; i++) {
                     materials[i] = r.ReadLine().Trim('\t', '"');
@@ -37,8 +41,12 @@ namespace PoeFormats {
             }
         }
 
-        string GetTgmPath(int x, int y) {
-            return $"{basePath}{tileMeshRoot.ToLower()}_c{x + 1}r{y + 1}.tgm";
+        public Tgm GetTgm(int x, int y) {
+            return new Tgm(GetTgmPath(x, y));
+        }
+
+        public string GetTgmPath(int x, int y) {
+            return Path.Combine(basePath, tileMeshRoot) + $"_c{x + 1}r{y + 1}.tgm";
         }
 
         public string[] GetSubtileObjNames(int x, int y) {
