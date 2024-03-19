@@ -49,6 +49,19 @@ namespace PoeFormats {
             return Path.Combine(basePath, tileMeshRoot) + $"_c{x + 1}r{y + 1}.tgm";
         }
 
+        public string[] GetSubtileMaterials(int x, int y) {
+            List<string> names = new List<string>();
+            int[] indices = subtileMaterialIndices[x + (sizeY - y - 1) * sizeX];
+            //Console.WriteLine($"c{x + 1} r {y + 1}");
+            for (int i = 0; i < indices.Length; i += 2) {
+                for (int j = 0; j < indices[i + 1]; j++) {
+                    names.Add(materials[indices[i]]);
+                }
+            }
+            return names.ToArray();
+        }
+
+
         public string[] GetSubtileObjNames(int x, int y) {
             List<string> names = new List<string>();
             int[] indices = subtileMaterialIndices[x + (sizeY - y - 1) * sizeX];
