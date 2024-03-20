@@ -31,12 +31,14 @@ namespace PoeFormats {
                 for(int i = 0; i < materials.Length; i++) {
                     materials[i] = r.ReadLine().Trim('\t', '"');
                 }
-                r.ReadLine();
-                subtileMaterialIndices = new int[sizeX * sizeY][];
-                for(int i = 0; i < sizeX * sizeY; i++) {
-                    WordReader wr = new WordReader(r.ReadLine().Trim('\t'));
-                    subtileMaterialIndices[i] = new int[wr.ReadInt() * 2];
-                    for (int w = 0; w < subtileMaterialIndices[i].Length; w++) subtileMaterialIndices[i][w] = wr.ReadInt();
+                if(materials.Length > 0) {
+                    r.ReadLine();
+                    subtileMaterialIndices = new int[sizeX * sizeY][];
+                    for (int i = 0; i < sizeX * sizeY; i++) {
+                        WordReader wr = new WordReader(r.ReadLine().Trim('\t'));
+                        subtileMaterialIndices[i] = new int[wr.ReadInt() * 2];
+                        for (int w = 0; w < subtileMaterialIndices[i].Length; w++) subtileMaterialIndices[i][w] = wr.ReadInt();
+                    }
                 }
             }
         }
@@ -46,6 +48,7 @@ namespace PoeFormats {
         }
 
         public string GetTgmPath(int x, int y) {
+            if (sizeX == 1 && sizeY == 1) return Path.Combine(basePath, tileMeshRoot) + ".tgm";
             return Path.Combine(basePath, tileMeshRoot) + $"_c{x + 1}r{y + 1}.tgm";
         }
 
@@ -61,6 +64,26 @@ namespace PoeFormats {
             return names.ToArray();
         }
 
+        public string[] GetSubtileMaterialsCombined(int x, int y) {
+            List<string> names = new List<string>();
+            int[] indices = subtileMaterialIndices[x + (sizeY - y - 1) * sizeX];
+            string[] materialNames = new string[indices.Length / 2];
+
+            for (int i = 0; i < materialNames.Length; i ++) {
+                materialNames[i] = materials[indices[i * 2]];
+            }
+            return materialNames;
+        }
+
+        public int[] GetCombinedShapeLengths(int x, int y) {
+            if (subtileMaterialIndices == null) return new int[] { 0 };
+            int[] indices = subtileMaterialIndices[x + (sizeY - y - 1) * sizeX];
+            int[] lengths = new int[indices.Length / 2];
+            for(int i = 0; i < lengths.Length; i++) {
+                lengths[i] = indices[i * 2 + 1];
+            }
+            return lengths;
+        }
 
         public string[] GetSubtileObjNames(int x, int y) {
             List<string> names = new List<string>();

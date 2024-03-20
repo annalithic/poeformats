@@ -16,7 +16,7 @@ namespace PoeFormats {
             i = r.ReadInt16();
             format58unk = 0;
             if (includeUnk) {
-                if (version >= 13) format58unk = r.ReadInt32();
+                if (version >= 12) format58unk = r.ReadInt32();
                 else if (version >= 10) format58unk = r.ReadUInt16();
             }
             bbox = r.ReadBBox();
@@ -43,7 +43,7 @@ namespace PoeFormats {
 
         public Tgm(string path) {
             filename = Path.GetFileNameWithoutExtension(path);
-            
+
             /*
             string possibleColRow = filename.Substring(filename.LastIndexOf('_') + 1);
             if (possibleColRow.StartsWith('c')) {
@@ -56,26 +56,56 @@ namespace PoeFormats {
             }
             */
 
-            using(BinaryReader r = new BinaryReader(File.OpenRead(path))) {
+            using (BinaryReader r = new BinaryReader(new MemoryStream(File.ReadAllBytes(path)))) {
                 version = r.ReadByte();
 
-                if(version < 9) {
-                    Console.WriteLine($"OLD TGM VERSION {version} NOT SUPPORTED LOL");
-                    return;
-                }
+                //if (version < 9) {
+                //    Console.WriteLine($"OLD TGM VERSION {version} NOT SUPPORTED LOL");
+                //    return;
+                //}
 
                 bBox = r.ReadBBox();
-                unk1 = r.ReadInt16();
-                unk2 = r.ReadInt16();
-                unk3 = r.ReadInt16();
-                model = new PoeModel(r);
 
-                modelExtraData = new TgmModelExtraData[model.meshCount];
-                for (int i = 0; i < model.meshCount; i++) {
-                    modelExtraData[i] = new TgmModelExtraData(r, version, true);
+                if(version >= 9) {
+                    unk1 = r.ReadInt16();
+                    unk2 = r.ReadInt16();
+                    unk3 = r.ReadInt16();
+                    model = new PoeModel(r);
+
+                    modelExtraData = new TgmModelExtraData[model.meshCount];
+                    for (int i = 0; i < model.meshCount; i++) {
+                        modelExtraData[i] = new TgmModelExtraData(r, version, true);
+                    }
+
+                    groundModel = new PoeModel(r);
+
+                } else {
+                    model = new PoeModel();
+                    model.meshCount = 1;
+                    int shapeCount = r.ReadUInt16();
+                    int vertCount = r.ReadInt32();
+                    int triCount = r.ReadInt32();
+                    PoeMesh mesh = new PoeMesh(triCount, vertCount, shapeCount);
+                    r.Seek(12); //ground, tail data
+                    if (version == 8) r.Seek(4);
+                    for(int i = 0; i < shapeCount; i++) {
+                        if(version > 2) r.Seek(2);
+                        r.ReadBBox();
+                        mesh.shapeOffsets[i] = r.ReadInt32();
+                        mesh.shapeLengths[i] = r.ReadInt32();
+                    }
+                    for(int i = 0; i < vertCount; i++) {
+                        mesh.verts[i * 3] = r.ReadSingle();
+                        mesh.verts[i * 3 + 1] = r.ReadSingle();
+                        mesh.verts[i * 3 + 2] = r.ReadSingle();
+                        r.Seek(8);
+                        mesh.uvs[i * 2] = r.ReadUInt16();
+                        mesh.uvs[i * 2 + 1] = r.ReadUInt16();
+                    }
+                    if (vertCount > 65535) for (int i = 0; i < mesh.idx.Length; i++) mesh.idx[i] = r.ReadInt32();
+                    else for (int i = 0; i < mesh.idx.Length; i++) mesh.idx[i] = r.ReadUInt16();
+                    model.meshes = new PoeMesh[1] { mesh };
                 }
-
-                groundModel = new PoeModel(r);
 
                 //groundExtraData = new TgmModelExtraData[model.meshCount];
                 //for (int i = 0; i < model.meshCount; i++) {

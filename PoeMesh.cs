@@ -36,13 +36,13 @@ namespace PoeFormats {
         public PoeMesh() {
         }
 
-        public PoeMesh(int triCount, int vertCount, int submeshCount) {
+        public PoeMesh(int triCount, int vertCount, int shapeCount) {
             this.vertCount = vertCount;
             verts = new float[vertCount * 3];
             uvs = new ushort[vertCount * 2];
             idx = new int[triCount * 3];
-            shapeOffsets = new int[submeshCount];
-            shapeLengths = new int[submeshCount];
+            shapeOffsets = new int[shapeCount];
+            shapeLengths = new int[shapeCount];
         }
 
         public void Read(BinaryReader r, int vertexFormat) {
