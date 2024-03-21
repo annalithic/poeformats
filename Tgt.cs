@@ -35,9 +35,24 @@ namespace PoeFormats {
                     r.ReadLine();
                     subtileMaterialIndices = new int[sizeX * sizeY][];
                     for (int i = 0; i < sizeX * sizeY; i++) {
-                        WordReader wr = new WordReader(r.ReadLine().Trim('\t'));
-                        subtileMaterialIndices[i] = new int[wr.ReadInt() * 2];
-                        for (int w = 0; w < subtileMaterialIndices[i].Length; w++) subtileMaterialIndices[i][w] = wr.ReadInt();
+                        string[] words = r.ReadLine().Trim('\t').Split();
+                        int count = int.Parse(words[0]);
+                        int[] indices = new int[count * 2];
+                        if(words.Length == count * 3 + 1) {
+                            for(int idx = 0; idx < count; idx++) {
+                                indices[idx * 2] = int.Parse(words[idx * 3 + 2]);
+                                indices[idx * 2 + 1] = int.Parse(words[idx * 3 + 3]);
+                            }
+                        } else {
+                            for (int idx = 0; idx < indices.Length; idx++) {
+                                indices[idx] = int.Parse(words[idx + 1]);
+                            }
+                        }
+                        subtileMaterialIndices[i] = indices;
+                        //WordReader wr = new WordReader(r.ReadLine().Trim('\t'));
+
+                        //subtileMaterialIndices[i] = new int[wr.ReadInt() * 2];
+                        //for (int w = 0; w < subtileMaterialIndices[i].Length; w++) subtileMaterialIndices[i][w] = wr.ReadInt();
                     }
                 }
             }
@@ -76,7 +91,7 @@ namespace PoeFormats {
         }
 
         public int[] GetCombinedShapeLengths(int x, int y) {
-            if (subtileMaterialIndices == null) return new int[] { 0 };
+            if(subtileMaterialIndices == null) return new int[] {0};
             int[] indices = subtileMaterialIndices[x + (sizeY - y - 1) * sizeX];
             int[] lengths = new int[indices.Length / 2];
             for(int i = 0; i < lengths.Length; i++) {
