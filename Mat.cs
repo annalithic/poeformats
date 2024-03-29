@@ -15,33 +15,65 @@ namespace PoeFormats {
             "ColourHeight_TEX"
         };
 
+        public class Parameter {
+            public string path;
+            public bool srgb;
+            public float value;
+            public bool hasValue;
+
+            public Parameter() {
+                path = null;
+                srgb = false;
+                value = 0.0f;
+                hasValue = false;
+            }
+        }
+
         public class GraphInstance {
             public string parent;
-            public List<string> parameters;
+            public Dictionary<string, Parameter> parameters;
             public string baseTex;
 
             public GraphInstance(JsonNode node) {
                 parent = node["parent"].ToString();
-                parameters = new List<string>();
+                parameters = new Dictionary<string, Parameter>();
                 if (node["custom_parameters"] != null) {
                     foreach (var param in node["custom_parameters"].AsArray()) {
                         string paramName = param["name"].ToString();
-                        if(colorTexNames.Contains(paramName)) {
-                            foreach(var paramValue in param["parameters"].AsArray()) {
-                                if (paramValue["path"] != null)
-                                    baseTex = paramValue["path"].ToString();
+                        Parameter parameter = new Parameter();
+                        foreach (var paramValue in param["parameters"].AsArray()) {
+                            if (paramValue["path"] != null) {
+                                string paramPath = paramValue["path"].ToString();
+                                Console.WriteLine("PATH FOUND " + paramPath);
+                                parameter.path = paramPath;
+
+                                if (colorTexNames.Contains(paramName)) {
+                                    baseTex = paramPath;
+                                }
+                            } 
+                            if (paramValue["srgb"] != null) {
+                                parameter.srgb = paramValue["srgb"].ToString() == "true";
+                            }
+                            if (paramValue["value"] != null) {
+                                string valueStr = paramValue["value"].ToString();
+                                if (float.TryParse(valueStr, out float value)) {
+                                    parameter.hasValue = true;
+                                    parameter.value = value;
+                                } else if (valueStr == "true") {
+                                    parameter.hasValue = true;
+                                    parameter.value = 1;
+                                } else if (valueStr == "false") {
+                                    parameter.hasValue = true;
+                                    parameter.value = 0;
+                                }
+
                             }
                         }
-                        parameters.Add(param["name"].ToString());
+                        parameters[paramName] = parameter;
                     }
                 }
             }
 
-        }
-
-        public class Param {
-            public string name;
-            public List<string> parameters;
         }
 
         public int version;
