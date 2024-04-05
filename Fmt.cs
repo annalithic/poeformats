@@ -99,7 +99,14 @@ namespace PoeFormats {
                     unk2[i] = new System.Numerics.Vector3(r.ReadSingle(), r.ReadSingle(), r.ReadSingle());
                 }
 
-                //todo read unk3
+                for(int i = 0; i < unk3Count; i++) {
+                    r.Seek(45);
+                    if (version >= 3) r.Seek(25);
+                    if (version >= 4) r.Seek(8);
+                    if (version >= 6) r.Seek(5);
+                    if (version >= 7) r.Seek(4);
+                }
+
                 int nameTableLength = r.ReadInt32();
 
                 long pos = r.BaseStream.Position;
