@@ -103,6 +103,17 @@ namespace PoeFormats {
                     r.Seek(4);
                 }
 
+                if(vertexFormat == 120) {
+                    r.Seek(4);
+                }
+
+            }
+
+            if(vertexFormat == 120) {
+                for(int i = 0; i < shapeOffsets.Length; i++) {
+                    r.ReadBBox();
+                    r.Seek(12);
+                }
             }
 
         }
