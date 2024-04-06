@@ -67,7 +67,7 @@ namespace PoeFormats {
                         mesh.shapeOffsets[i] = r.ReadInt32() * 3;
                         //mesh.submeshSizes[i] = r.ReadInt32();
                     }
-                    mesh.SetShapeSizes();
+                    if(model.meshCount != 0) mesh.SetShapeSizes();
 
                     //if(version == 2) unk2 = r.ReadInt32();
                     r.Seek(submeshNamesLength); //submesh names, stored in .sm for version 3 i think

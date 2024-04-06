@@ -82,7 +82,7 @@ namespace PoeFormats {
         public Mat(string gamePath, string path) : this(Path.Combine(gamePath, path)) { }
 
         public Mat(string path) {
-            string jsonText = File.ReadAllText(path, System.Text.Encoding.Unicode);
+            string jsonText = File.ReadAllText(path, System.Text.Encoding.Unicode); 
             JsonNode json = JsonNode.Parse(jsonText);
             version = (int)json["version"];
             graphs = new List<GraphInstance>();

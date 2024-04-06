@@ -22,7 +22,7 @@ namespace PoeFormats {
         Unk1[] unk1;
         System.Numerics.Vector3[] unk2;
         //unk3 isnt handled for now
-        BBox bbox;
+        public BBox bbox;
 
         public string[] shapeNames;
         public string[] shapeMaterials;
@@ -73,7 +73,7 @@ namespace PoeFormats {
                         shapeMatIndex[i] = r.ReadInt32();
                         m.shapeOffsets[i] = r.ReadInt32() * 3;
                     }
-                    m.SetShapeSizes();
+                    if(shapeCount != 0) m.SetShapeSizes();
 
                     for (int i = 0; i < unk1.Length; i++) {
                         unk1[i] = new Unk1 {
@@ -82,8 +82,14 @@ namespace PoeFormats {
                         };
                     }
 
-                    for (int i = 0; i < m.idx.Length; i++) {
-                        m.idx[i] = r.ReadUInt16();
+                    if(m.vertCount > 65536) {
+                        for (int i = 0; i < m.idx.Length; i++) {
+                            m.idx[i] = r.ReadInt32();
+                        }
+                    } else {
+                        for (int i = 0; i < m.idx.Length; i++) {
+                            m.idx[i] = r.ReadUInt16();
+                        }
                     }
 
                     for (int i = 0; i < m.vertCount; i++) {

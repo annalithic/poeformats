@@ -6,6 +6,8 @@ namespace PoeFormats {
 
     public struct BBox {
         public float x1, x2, y1, y2, z1, z2;
+
+        public float SizeX { get { return x2 - x1; } }
     }
 
     public class PoeMeshOld {
