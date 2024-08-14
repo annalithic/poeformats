@@ -129,7 +129,7 @@ namespace PoeFormats {
                 for (int x = 0; x < sizeX; x++) {
                     Tgm tgm = new Tgm(GetTgmPath(x, y));
                     var names = GetSubtileObjNames(x, y);
-                    Console.WriteLine($"({x},{y}) {names.Length} - {tgm.model.meshCount}");
+                    Console.WriteLine($"({x},{y}) {names.Length} - {tgm.model.shapeCount}");
                     tgm.ToObj(names, x, y, filename + ".mtl");
                 }
             }

@@ -16,7 +16,7 @@ namespace PoeFormats {
             public byte f;
         }
 
-        byte version;
+        public byte version;
         int shapeCount; //Should be equal to meshes[0].shapeCount
 
         Unk1[] unk1;
@@ -54,6 +54,9 @@ namespace PoeFormats {
                 bbox = r.ReadBBox();
                 if (version == 9) {
                     Read(r);
+                    if (modelVersion == 4) {
+                        r.ReadInt32(); //unk count
+                    }
                     for (int i = 0; i < shapeCount; i++) {
                         shapeNameIndex[i] = r.ReadInt32();
                         shapeMatIndex[i] = r.ReadInt32();
@@ -122,7 +125,7 @@ namespace PoeFormats {
                     r.BaseStream.Seek(pos + shapeMatIndex[i] * 2, SeekOrigin.Begin);
                     shapeMaterials[i] = r.ReadWStringNullTerminated();
                 }
-                Console.WriteLine("DONE");
+                //Console.WriteLine("DONE");
             }
         }
     }

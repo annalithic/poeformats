@@ -69,7 +69,7 @@ namespace PoeFormats {
             //56: XXXX YYYY ZZZZ NNNN TTTT UUVV
             //48: XXXX YYYY ZZZZ NNNN TTTT
 
-            if(vertexFormat == 60 || vertexFormat == 61) {
+            if(vertexFormat == 60 || vertexFormat == 61 || vertexFormat == 62) {
                 boneWeights = new BoneWeightSortable[vertCount][];
             }
 
@@ -90,7 +90,7 @@ namespace PoeFormats {
                 if (vertexFormat == 57 || vertexFormat == 58) {
                     r.Seek(4);
                 }
-                if(vertexFormat == 60 || vertexFormat == 61) {
+                if(vertexFormat == 60 || vertexFormat == 61 || vertexFormat == 62) {
                     boneWeights[i] = new BoneWeightSortable[4];
                     for (int weight = 0; weight < 4; weight++) {
                         boneWeights[i][weight] = new BoneWeightSortable(r.ReadByte());
@@ -99,7 +99,7 @@ namespace PoeFormats {
                         boneWeights[i][weight].weight = r.ReadByte();
                     }
                 }
-                if(vertexFormat == 61) {
+                if(vertexFormat == 61 || vertexFormat == 62) {
                     r.Seek(4);
                 }
 
@@ -127,9 +127,9 @@ namespace PoeFormats {
         }
     }
     public class PoeModel {
-        public short unk1;
+        public short modelVersion;
         public PoeMesh[] meshes;
-        public int meshCount;
+        public int shapeCount;
         public int vertexFormat;
 
         public PoeModel() { }
@@ -141,15 +141,21 @@ namespace PoeFormats {
         public void Read(BinaryReader r) {
             string magic = new string(r.ReadChars(4));
             if (magic != "DOLm") Console.WriteLine("MODEL MAGIC IS WRONG - " + magic);
-            unk1 = r.ReadInt16();
+            modelVersion = r.ReadInt16();
             meshes = new PoeMesh[r.ReadByte()];
-            meshCount = r.ReadUInt16();
+            shapeCount = r.ReadUInt16();
             vertexFormat = r.ReadInt32();
             for (int i = 0; i < meshes.Length; i++) {
-                meshes[i] = new PoeMesh(r.ReadInt32(), r.ReadInt32(), meshCount);
+                meshes[i] = new PoeMesh(r.ReadInt32(), r.ReadInt32(), shapeCount);
             }
             for (int i = 0; i < meshes.Length; i++) {
                 meshes[i].Read(r, vertexFormat);
+            }
+
+            //what?
+            if (modelVersion == 4) {
+                for (int i = 0; i < meshes.Length; i++)
+                    r.ReadInt32(); //UNK COUNT???
             }
         }
     }

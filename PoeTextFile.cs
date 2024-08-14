@@ -27,7 +27,7 @@ namespace PoeFormats {
 
 
         //this doesnt work because some stuff needs to be in order - melee then, animation timings
-        class Block {
+        public class Block {
             public List<string> keys;
             public List<string> values;
 
@@ -78,10 +78,22 @@ namespace PoeFormats {
             return false;
         }
 
+        public Block GetBlock(string block)  {
+            if (blocks.ContainsKey(block)) return blocks[block];
+            return new Block();
+        }
+
         //lastindexof so children override parents
         public string Get(string block, string value) {
             if (!blocks.ContainsKey(block)) return null;
             int i = blocks[block].keys.LastIndexOf(value);
+            if (i == -1) return null;
+            return blocks[block].values[i];
+        }
+
+        public string GetFirst(string block, string value) {
+            if (!blocks.ContainsKey(block)) return null;
+            int i = blocks[block].keys.IndexOf(value);
             if (i == -1) return null;
             return blocks[block].values[i];
         }
@@ -105,35 +117,7 @@ namespace PoeFormats {
             blocks = new Dictionary<string, Block>();
             blocks["NULL"] = new Block();
 
-
             ReadFile(baseFolder, path);
-
-
-
-            /*
-
-            while(reader.Peek() != -1) {
-                string token = GetNextToken();
-
-                if (token.StartsWith("//")) tokens.Clear(); // single line comment
-
-                if(state == State.Toplevel) {
-                    if(token == "version") {
-                        version = int.Parse(GetNextToken());
-                        if (version != 2) Console.WriteLine($"VERSION {version}");
-                    } else if (token == "extends") {
-                        parents.Add(GetNextToken());
-                    }
-
-                }
-
-            }
-            */
-
-
-
-
-
         }
 
 

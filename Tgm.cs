@@ -72,8 +72,8 @@ namespace PoeFormats {
                     unk3 = r.ReadInt16();
                     model = new PoeModel(r);
 
-                    modelExtraData = new TgmModelExtraData[model.meshCount];
-                    for (int i = 0; i < model.meshCount; i++) {
+                    modelExtraData = new TgmModelExtraData[model.shapeCount];
+                    for (int i = 0; i < model.shapeCount; i++) {
                         modelExtraData[i] = new TgmModelExtraData(r, version, true);
                     }
 
@@ -81,7 +81,7 @@ namespace PoeFormats {
 
                 } else {
                     model = new PoeModel();
-                    model.meshCount = 1;
+                    model.shapeCount = 1;
                     int shapeCount = r.ReadUInt16();
                     int vertCount = r.ReadInt32();
                     int triCount = r.ReadInt32();

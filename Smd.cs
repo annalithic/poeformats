@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using PoeFormats.Util;
 
 namespace PoeFormats {
@@ -26,6 +27,7 @@ namespace PoeFormats {
         public int unk2;
         public BBox bbox;
         public PoeModel model;
+        public string[] shapeNames;
 
         public Smd(string gamePath, string path) : this(Path.Combine(gamePath, path)) { }
 
@@ -38,6 +40,13 @@ namespace PoeFormats {
                     unk2 = r.ReadInt32();
                     bbox = r.ReadBBox();
                     model = new PoeModel(r);
+
+                    int[] shapeNameLengths = new int[shapeCount];
+                    for (int i = 0; i < shapeCount; i++) shapeNameLengths[i] = r.ReadInt32();
+                    shapeNames = new string[shapeCount];
+                    for (int i = 0; i < shapeCount; i++) {
+                        shapeNames[i] = Encoding.Unicode.GetString(r.ReadBytes(shapeNameLengths[i]));
+                    }
 
                 } else {
                     //kind of jamming the old model format into the version 3 format in a funny way
@@ -53,24 +62,26 @@ namespace PoeFormats {
 
                     unk1 = r.ReadByte();
 
-                    model.meshCount = r.ReadUInt16();
-                    mesh.shapeOffsets = new int[model.meshCount];
-                    mesh.shapeLengths = new int[model.meshCount];
+                    model.shapeCount = r.ReadUInt16();
 
                     int submeshNamesLength = r.ReadInt32();
                     bbox = r.ReadBBox();
                     if (version == 2) r.ReadInt32();
-                    mesh.shapeOffsets = new int[model.meshCount];
-                    mesh.shapeLengths = new int[model.meshCount];
-                    for(int i = 0; i < model.meshCount; i++) {
-                        r.ReadInt32(); //submesh name length?
-                        mesh.shapeOffsets[i] = r.ReadInt32() * 3;
-                        //mesh.submeshSizes[i] = r.ReadInt32();
-                    }
-                    if(model.meshCount != 0) mesh.SetShapeSizes();
 
+                    mesh.shapeOffsets = new int[model.shapeCount];
+                    mesh.shapeLengths = new int[model.shapeCount];
+                    shapeNames = new string[model.shapeCount];
+                    int[] shapeNameLengths = new int[model.shapeCount];
+                    for (int i = 0; i < model.shapeCount; i++) {
+                        shapeNameLengths[i] = r.ReadInt32();
+                        mesh.shapeOffsets[i] = r.ReadInt32() * 3;
+                    }
+                    if(model.shapeCount != 0) mesh.SetShapeSizes();
+                    for(int i = 0; i < model.shapeCount; i++) {
+                        shapeNames[i] = Encoding.Unicode.GetString(r.ReadBytes(shapeNameLengths[i]));
+                    }
                     //if(version == 2) unk2 = r.ReadInt32();
-                    r.Seek(submeshNamesLength); //submesh names, stored in .sm for version 3 i think
+                    //r.Seek(submeshNamesLength); //submesh names, stored in .sm for version 3 i think
 
                     //copypasted from poemesh, todo fix
                     if (mesh.vertCount > 65535) for (int i = 0; i < mesh.idx.Length; i++) mesh.idx[i] = r.ReadInt32();
@@ -97,8 +108,6 @@ namespace PoeFormats {
                     }
 
                 }
-
-
 
                 /*
                 if (version == 3) {
@@ -155,14 +164,6 @@ namespace PoeFormats {
                     for (int weight = 0; weight < 4; weight++) {
                         boneWeights[vert][weight].weight = r.ReadByte();
                     }
-                }
-
-
-                int[] shapeNameLengths = new int[shapeCount];
-                for (int i = 0; i < shapeCount; i++) shapeNameLengths[i] = r.ReadInt32();
-                shapeNames = new string[shapeCount];
-                for (int i = 0; i < shapeCount; i++) {
-                    shapeNames[i] = Encoding.Unicode.GetString(r.ReadBytes(shapeNameLengths[i]));
                 }
                 */
             }

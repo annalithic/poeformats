@@ -89,10 +89,10 @@ namespace PoeFormats {
                 animations[i].unk1 = r.ReadByte();
                 animations[i].framerate = r.ReadByte();
                 animations[i].unk2 = r.ReadByte();
-                if (version == 11) animations[i].version11a = r.ReadByte();
+                if (version > 10) animations[i].version11a = r.ReadByte();
                 byte nameLength = r.ReadByte();
                 int parentNameLength = 0;
-                if (version == 11) parentNameLength = r.ReadByte();
+                if (version > 10) parentNameLength = r.ReadByte();
                 animations[i].dataOffset = r.ReadInt32();
                 animations[i].dataSize = r.ReadInt32();
                 animations[i].name = new string(r.ReadChars(nameLength));
@@ -112,7 +112,7 @@ namespace PoeFormats {
                         animations[anim].tracks[track].scaleKeys2 = new float[r2.ReadInt32()][];
                         animations[anim].tracks[track].rotationKeys2 = new float[r2.ReadInt32()][];
                         animations[anim].tracks[track].positionKeys2 = new float[r2.ReadInt32()][];
-                        if (version == 11) r2.BaseStream.Seek(4, SeekOrigin.Current);
+                        if (version > 10) r2.BaseStream.Seek(4, SeekOrigin.Current);
 
                         for (int i = 0; i < animations[anim].tracks[track].scaleKeys.Length; i++) {
                             animations[anim].tracks[track].scaleKeys[i] = new float[4]; //time + vec3
