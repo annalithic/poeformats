@@ -54,9 +54,6 @@ namespace PoeFormats {
                 bbox = r.ReadBBox();
                 if (version == 9) {
                     Read(r);
-                    if (modelVersion == 4) {
-                        r.ReadInt32(); //unk count
-                    }
                     for (int i = 0; i < shapeCount; i++) {
                         shapeNameIndex[i] = r.ReadInt32();
                         shapeMatIndex[i] = r.ReadInt32();
