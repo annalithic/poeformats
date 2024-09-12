@@ -1,72 +1,103 @@
 ﻿using System;
+using System.Data;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace PoeFormats {
     public class Database {
+        string datDirectory;
+        Dictionary<string, DatReader> readers;
+        Dictionary<string, Object[]> rows;
 
-        class Column {
-            string name;
-            bool array;
-            enum Type {
-                Bool,
-                Int,
-                Float,
-                String,
-                Reference,
-                Unknown
-            }
-            Type type;
-            string references;
-
-            public Column(JObject o, ref int unkCount, HashSet<string> test) {
-                name = o["name"].Value<string>();
-                if(name == null) {
-                    unkCount++;
-                    name = $"unk{unkCount}";
-                }
-                array = o["array"].Value<bool>();
-                switch (o["type"].Value<string>()) {
-                    case "bool":
-                        type = Type.Bool; break;
-                    case "i32":
-                        type = Type.Int; break;
-                    case "f32":
-                        type = Type.Float; break;
-                    case "string":
-                        type = Type.String; break;
-                    case "foreignrow":
-                    case "enumrow":
-                        type = Type.Reference;
-                        if (o["references"] != null && o["references"].HasValues) {
-                            references = o["references"]["table"].Value<string>();
-                        }
-                        break;
-                    default:
-                        type = Type.Unknown; break;
-                }
-            }
+        public Database(string dir) {
+            datDirectory = dir;
+            readers = new Dictionary<string, DatReader>();
+            rows = new Dictionary<string, object[]>();
         }
 
-
-        Dictionary<string, Column[]> schema;
-
-        public Database(string datDirectory, string schemaPath) {
-            HashSet<string> columnTypes = new HashSet<string>();
-            schema = new Dictionary<string, Column[]>();
-            using (StreamReader reader = File.OpenText(schemaPath)) {
-                JObject o = (JObject)JToken.ReadFrom(new JsonTextReader(reader));
-                foreach(JObject table in o["tables"].Value<JArray>()) {
-                    JArray c = (JArray)table["columns"];
-                    Column[] columns = new Column[c.Count];
-                    int unkCount = 0;
-                    for (int i = 0; i < columns.Length; i++) {
-                        columns[i] = new Column((JObject)c[i], ref unkCount, columnTypes);
-                    }
-                    schema[table["name"].Value<string>()] = columns;
-                }
+        public T Get<T>(string dat, int i) where T : Row, new() {
+            if (!rows.ContainsKey(dat)) {
+                DatReader r = new DatReader(Path.Combine(datDirectory, dat) + ".dat64");
+                readers[dat] = r;
+                rows[dat] = new Object[r.rowCount];
             }
-            foreach(string type in columnTypes) Console.WriteLine(type);
+            if (rows[dat][i] == null) {
+                T row = new T();
+                DatReader r = readers[dat];
+                r.SeekRow(i);
+                row.Read(this, r);
+                rows[dat][i] = row;
+                return row;
+            }
+            return (T)rows[dat][i];
         }
     }
+
+    public class Row {
+        public Row() { }
+        public virtual void Read(Database d, DatReader r) { }
+    }
+
+    public class MonsterResistance : Row {
+        public static string dat = "monsterresistances";
+        public string id;
+        public int fireNormal;
+        public int coldNormal;
+        public int lightningNormal;
+        public int chaosNormal;
+        public int fireCruel;
+        public int coldCruel;
+        public int lightningCruel;
+        public int chaosCruel;
+        public int fireMerciless;
+        public int coldMerciless;
+        public int lightningMerciless;
+        public int chaosMerciless;
+
+        public override void Read(Database d, DatReader r) {
+            id = r.String();
+            fireNormal = r.Int();
+            coldNormal = r.Int();
+            lightningNormal = r.Int();
+            chaosNormal = r.Int();
+            fireCruel = r.Int();
+            coldCruel = r.Int();
+            lightningCruel = r.Int();
+            chaosCruel = r.Int();
+            fireMerciless = r.Int();
+            coldMerciless = r.Int();
+            lightningMerciless = r.Int();
+            chaosMerciless = r.Int();
+        }
+    }
+
+    public class MonsterType : Row {
+        public static string dat = "monstertypes";
+        public string id;
+        public int unk1;
+        public bool isSummoned;
+        public int armour;
+        public int evasion;
+        public int energyShield;
+        public int damageSpread;
+        public MonsterResistance monsterResistancesKey;
+        public bool isLargeAbyssMonster;
+        public bool isSmallAbyssMonster;
+        public bool unk2;
+
+        public override void Read(Database d, DatReader r) {
+            id = r.String();
+            unk1 = r.Int();
+            isSummoned = r.Bool();
+            armour = r.Int();
+            evasion = r.Int();
+            energyShield = r.Int();
+            damageSpread = r.Int();
+            monsterResistancesKey = d.Get<MonsterResistance>(MonsterResistance.dat, r.Ref());
+            isLargeAbyssMonster = r.Bool();
+            isSmallAbyssMonster = r.Bool();
+            unk2 = r.Bool();
+        }
+    }
+
 }

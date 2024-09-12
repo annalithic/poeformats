@@ -29,4 +29,51 @@ namespace PoeFormats {
             }
         }
     }
+
+    public class DatReader : IDisposable {
+        public int rowCount;
+        public int rowWidth;
+
+        int varyingOffset;
+        BinaryReader r;
+
+        public DatReader(string path) {
+            r = new BinaryReader(File.OpenRead(path));
+            rowCount = r.ReadInt32();
+            while (true) {
+                r.BaseStream.Seek(4 + rowWidth * rowCount, SeekOrigin.Begin);
+                if (r.ReadUInt64() == 0xbbbbbbbbbbbbbbbb) break;
+                rowWidth++;
+            }
+            varyingOffset = 4 + rowWidth * rowCount;
+        }
+
+        public void SeekRow(int i) {
+            r.BaseStream.Seek(4 + rowWidth *  i, SeekOrigin.Begin);
+        }
+
+        public string String() {
+            long offset = r.ReadInt64();
+            var currentPos = r.BaseStream.Position;
+            r.BaseStream.Seek(varyingOffset + offset, SeekOrigin.Begin);
+            string s = r.ReadWStringNullTerminated();
+            r.BaseStream.Seek(currentPos, SeekOrigin.Begin);
+            return s;
+        }
+        public int Int() {
+            return r.ReadInt32();
+        }
+        public bool Bool() {
+            return r.ReadBoolean();
+        }
+        public int Ref() {
+            int refnum = r.ReadInt32();
+            r.Seek(12);
+            return refnum;
+        }
+
+        public void Dispose() {
+            r.Close();
+        }
+    }
 }
