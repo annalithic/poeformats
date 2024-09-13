@@ -1,6 +1,5 @@
 ﻿using PoeFormats.Util;
-using System;
-using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace PoeFormats {
     public class Dat {
@@ -82,6 +81,36 @@ namespace PoeFormats {
         public int Int() {
             return r.ReadInt32();
         }
+        public int[] IntArray() {
+            int count = (int)r.ReadInt64();
+            long offset = r.ReadInt64();
+            int[] values = new int[count];
+            var currentPos = r.BaseStream.Position;
+            r.BaseStream.Seek(varyingOffset + offset, SeekOrigin.Begin);
+            for (int i = 0; i < count; i++) {
+                values[i] = r.ReadInt32();
+            }
+            r.BaseStream.Seek(currentPos, SeekOrigin.Begin);
+            return values;
+        }
+
+        public float Float() {
+            return r.ReadSingle();
+        }
+
+        public float[] FloatArray() {
+            int count = (int)r.ReadInt64();
+            long offset = r.ReadInt64();
+            float[] values = new float[count];
+            var currentPos = r.BaseStream.Position;
+            r.BaseStream.Seek(varyingOffset + offset, SeekOrigin.Begin);
+            for (int i = 0; i < count; i++) {
+                values[i] = r.ReadSingle();
+            }
+            r.BaseStream.Seek(currentPos, SeekOrigin.Begin);
+            return values;
+        }
+
         public bool Bool() {
             return r.ReadBoolean();
         }
@@ -106,8 +135,41 @@ namespace PoeFormats {
             return offsets;
         }
 
+        public int Row() {
+            return (int)r.ReadInt64();
+        }
+
+        public int[] RowArray() {
+            int count = (int)r.ReadInt64();
+            long offset = r.ReadInt64();
+            int[] offsets = new int[count];
+
+            var currentPos = r.BaseStream.Position;
+            r.BaseStream.Seek(varyingOffset + offset, SeekOrigin.Begin);
+            for (int i = 0; i < count; i++) {
+                offsets[i] = (int)r.ReadInt64();
+            }
+            r.BaseStream.Seek(currentPos, SeekOrigin.Begin);
+            return offsets;
+        }
+
         public void Dispose() {
             r.Close();
         }
+
+        public void UnknownArray() {
+            r.Seek(16);
+        }
+
+        public T Enum<T>() where T : struct, IConvertible {
+            int i = Ref();
+            return Unsafe.As<int, T>(ref i);
+        }
+
+        public T[] EnumArray<T>() where T : struct, IConvertible {
+            int[] i = RefArray();
+            return Unsafe.As<int[], T[]>(ref i);
+        }
+
     }
 }

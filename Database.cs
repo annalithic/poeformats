@@ -1,8 +1,4 @@
-﻿using System;
-using System.Data;
-using System.Runtime.CompilerServices;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using System.Runtime.CompilerServices;
 
 namespace PoeFormats {
     public class Database {
@@ -87,6 +83,7 @@ namespace PoeFormats {
 
             return Unsafe.As<T[]>(table);
         }
+
     }
 
     public class Row {
