@@ -60,6 +60,25 @@ namespace PoeFormats {
             r.BaseStream.Seek(currentPos, SeekOrigin.Begin);
             return s;
         }
+
+        public string[] StringArray() {
+            int count = (int)r.ReadInt64();
+            long[] stringOffsets = new long[count];
+            string[] strings = new string[count];
+            long offset = r.ReadInt64();
+            var currentPos = r.BaseStream.Position;
+            r.BaseStream.Seek(varyingOffset + offset, SeekOrigin.Begin);
+            for (int i = 0; i < count; i++) {
+                stringOffsets[i] = r.ReadInt64();
+            }
+            for (int i = 0; i < count; i++) {
+                r.BaseStream.Seek(varyingOffset + stringOffsets[i], SeekOrigin.Begin);
+                strings[i] = r.ReadWStringNullTerminated();
+            }
+            r.BaseStream.Seek(currentPos, SeekOrigin.Begin);
+            return strings;
+        }
+
         public int Int() {
             return r.ReadInt32();
         }
@@ -70,6 +89,21 @@ namespace PoeFormats {
             int refnum = r.ReadInt32();
             r.Seek(12);
             return refnum;
+        }
+
+        public int[] RefArray() {
+            int count = (int)r.ReadInt64();
+            long offset = r.ReadInt64();
+            int[] offsets = new int[count];
+
+            var currentPos = r.BaseStream.Position;
+            r.BaseStream.Seek(varyingOffset + offset, SeekOrigin.Begin);
+            for (int i = 0; i < count; i++) {
+                offsets[i] = r.ReadInt32();
+                r.Seek(12);
+            }
+            r.BaseStream.Seek(currentPos, SeekOrigin.Begin);
+            return offsets;
         }
 
         public void Dispose() {
