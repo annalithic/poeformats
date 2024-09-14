@@ -32,6 +32,7 @@ namespace PoeFormats {
             if (i == -16843010) return null;
             if(dat == null) dat = typeDats[typeof(T).Name];
 
+
             DatReader r;
             object[] table;
 
@@ -47,10 +48,10 @@ namespace PoeFormats {
             }
 
             if (table[i] == null) {
+
                 T row = new T();
-                r.SeekRow(i);
-                row.Read(this, r);
                 table[i] = row;
+                row.Read(this, r, i);
                 return row;
             }
             return (T)table[i];
@@ -75,9 +76,8 @@ namespace PoeFormats {
             for(int i = 0; i < table.Length; i++) {
                 if (table[i] == null) {
                     T row = new T();
-                    r.SeekRow(i);
-                    row.Read(this, r);
                     table[i] = row;
+                    row.Read(this, r, i);
                 }
             }
 
@@ -89,6 +89,13 @@ namespace PoeFormats {
     public class Row {
         public Row() { }
         public virtual void Read(Database d, DatReader r) { }
+
+        public void Read(Database d, DatReader r, int i) {
+            long tempOffset = r.r.BaseStream.Position; //TODO jank
+            r.SeekRow(i);
+            Read(d, r);
+            r.r.BaseStream.Seek(tempOffset, SeekOrigin.Begin);
+        }
     }
 
     public class RowId : Row {
@@ -98,96 +105,4 @@ namespace PoeFormats {
             id = r.String();
         }
     }
-
-    public class SanctumRoomType : Row {
-        public string id;
-        public bool unk1;
-        public bool unk2;
-        //2 refs, skip
-        public bool unk3;
-        public string icon;
-        public bool unk4;
-        public string description;
-        public string[] names;
-        public RowId[] rooms;
-        public string unk5;
-        public bool unk6;
-
-        public override void Read(Database d, DatReader r) {
-            id = r.String();
-            unk1 = r.Bool();
-            unk2 = r.Bool();
-            r.Ref();
-            r.Ref();
-            unk3 = r.Bool();
-            icon = r.String();
-            unk4 = r.Bool();
-            description = r.String();
-            names = r.StringArray();
-            rooms = d.GetArray<RowId>(r.RefArray(), "sanctumrooms");
-            unk5 = r.String();
-            unk6 = r.Bool();
-        }
-    }
-
-    public class MonsterResistance : Row {
-        public string id;
-        public int fireNormal;
-        public int coldNormal;
-        public int lightningNormal;
-        public int chaosNormal;
-        public int fireCruel;
-        public int coldCruel;
-        public int lightningCruel;
-        public int chaosCruel;
-        public int fireMerciless;
-        public int coldMerciless;
-        public int lightningMerciless;
-        public int chaosMerciless;
-
-        public override void Read(Database d, DatReader r) {
-            id = r.String();
-            fireNormal = r.Int();
-            coldNormal = r.Int();
-            lightningNormal = r.Int();
-            chaosNormal = r.Int();
-            fireCruel = r.Int();
-            coldCruel = r.Int();
-            lightningCruel = r.Int();
-            chaosCruel = r.Int();
-            fireMerciless = r.Int();
-            coldMerciless = r.Int();
-            lightningMerciless = r.Int();
-            chaosMerciless = r.Int();
-        }
-    }
-
-    public class MonsterType : Row {
-        public string id;
-        public int unk1;
-        public bool isSummoned;
-        public int armour;
-        public int evasion;
-        public int energyShield;
-        public int damageSpread;
-        public MonsterResistance monsterResistancesKey;
-        public bool isLargeAbyssMonster;
-        public bool isSmallAbyssMonster;
-        public bool unk2;
-
-        public override void Read(Database d, DatReader r) {
-            id = r.String();
-            unk1 = r.Int();
-            isSummoned = r.Bool();
-            armour = r.Int();
-            evasion = r.Int();
-            energyShield = r.Int();
-            damageSpread = r.Int();
-            monsterResistancesKey = d.Get<MonsterResistance>(r.Ref());
-            isLargeAbyssMonster = r.Bool();
-            isSmallAbyssMonster = r.Bool();
-            unk2 = r.Bool();
-        }
-    }
-
 }

@@ -19,10 +19,12 @@ namespace PoeFormats {
                 String,
                 Reference,
                 Row,
+                Enum,
                 Unknown
             }
             public Type type;
             public string references;
+            public bool isEnum;
 
             public Column(JObject o, ref int unkCount, HashSet<string> test) {
                 name = o["name"].Value<string>();
@@ -40,8 +42,13 @@ namespace PoeFormats {
                         type = Type.Float; break;
                     case "string":
                         type = Type.String; break;
-                    case "foreignrow":
                     case "enumrow":
+                        type = Type.Enum;
+                        if (o["references"] != null && o["references"].HasValues) {
+                            references = o["references"]["table"].Value<string>();
+                        }
+                        break;
+                    case "foreignrow":
                         type = Type.Reference;
                         if (o["references"] != null && o["references"].HasValues) {
                             references = o["references"]["table"].Value<string>();
@@ -153,26 +160,37 @@ namespace PoeFormats {
                                 } else {
                                     string references = column.references.ToLower();
                                     string refClass = datClassNames[references];
-
-                                    if (enums.ContainsKey(references)) {
-                                        if (column.array) {
-                                            w.WriteLine($"\t\tpublic {refClass}[] {columnName};");
-                                            readLines.Add($"\t\t\t{columnName} = r.EnumArray<{refClass}>();");
-                                        }
-                                        else {
-                                            w.WriteLine($"\t\tpublic {refClass} {columnName};");
-                                            readLines.Add($"\t\t\t{columnName} = r.Enum<{refClass}>();");
-                                        }
+                                    
+                                    if (column.array) {
+                                        w.WriteLine($"\t\tpublic {refClass}[] {columnName};");
+                                        readLines.Add($"\t\t\t{columnName} = d.GetArray<{refClass}>(r.RefArray());");
                                     }
                                     else {
-                                        if (column.array) {
-                                            w.WriteLine($"\t\tpublic {refClass}[] {columnName};");
-                                            readLines.Add($"\t\t\t{columnName} = d.GetArray<{refClass}>(r.RefArray());");
-                                        }
-                                        else {
-                                            w.WriteLine($"\t\tpublic {refClass} {columnName};");
-                                            readLines.Add($"\t\t\t{columnName} = d.Get<{refClass}>(r.Ref());");
-                                        }
+                                        w.WriteLine($"\t\tpublic {refClass} {columnName};");
+                                        readLines.Add($"\t\t\t{columnName} = d.Get<{refClass}>(r.Ref());");
+                                    }
+                                    
+                                }
+                                break;
+                            case Column.Type.Enum:
+                                if (column.references == null) {
+                                    if (column.array) {
+                                        readLines.Add($"\t\t\tr.IntArray();");
+                                    }
+                                    else {
+                                        readLines.Add($"\t\t\tr.Int();");
+                                    }
+                                }
+                                else {
+                                    string references = column.references.ToLower();
+                                    string refClass = datClassNames[references];
+                                    if (column.array) {
+                                        w.WriteLine($"\t\tpublic {refClass}[] {columnName};");
+                                        readLines.Add($"\t\t\t{columnName} = r.EnumArray<{refClass}>();");
+                                    }
+                                    else {
+                                        w.WriteLine($"\t\tpublic {refClass} {columnName};");
+                                        readLines.Add($"\t\t\t{columnName} = r.Enum<{refClass}>();");
                                     }
 
 

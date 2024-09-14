@@ -34,7 +34,7 @@ namespace PoeFormats {
         public int rowWidth;
 
         int varyingOffset;
-        BinaryReader r;
+        public BinaryReader r;
 
         public DatReader(string path) {
             r = new BinaryReader(File.OpenRead(path));
@@ -123,19 +123,21 @@ namespace PoeFormats {
         public int[] RefArray() {
             int count = (int)r.ReadInt64();
             long offset = r.ReadInt64();
-            int[] offsets = new int[count];
+            int[] values = new int[count];
 
             var currentPos = r.BaseStream.Position;
             r.BaseStream.Seek(varyingOffset + offset, SeekOrigin.Begin);
             for (int i = 0; i < count; i++) {
-                offsets[i] = r.ReadInt32();
+                values[i] = r.ReadInt32();
                 r.Seek(12);
             }
             r.BaseStream.Seek(currentPos, SeekOrigin.Begin);
-            return offsets;
+            return values;
         }
 
         public int Row() {
+            int test = (int)r.ReadInt64();
+            return test;
             return (int)r.ReadInt64();
         }
 
@@ -162,13 +164,22 @@ namespace PoeFormats {
         }
 
         public T Enum<T>() where T : struct, IConvertible {
-            int i = Ref();
+            int i = r.ReadInt32();
             return Unsafe.As<int, T>(ref i);
         }
 
         public T[] EnumArray<T>() where T : struct, IConvertible {
-            int[] i = RefArray();
-            return Unsafe.As<int[], T[]>(ref i);
+            int count = (int)r.ReadInt64();
+            long offset = r.ReadInt64();
+            int[] values = new int[count];
+
+            var currentPos = r.BaseStream.Position;
+            r.BaseStream.Seek(varyingOffset + offset, SeekOrigin.Begin);
+            for (int i = 0; i < count; i++) {
+                values[i] = r.ReadInt32();
+            }
+            r.BaseStream.Seek(currentPos, SeekOrigin.Begin);
+            return Unsafe.As<int[], T[]>(ref values);
         }
 
     }

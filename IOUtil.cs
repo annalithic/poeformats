@@ -11,13 +11,14 @@ namespace PoeFormats.Util {
             return new BBox() { x1 = r.ReadSingle(), x2 = r.ReadSingle(), y1 = r.ReadSingle(), y2 = r.ReadSingle(), z1 = r.ReadSingle(), z2 = r.ReadSingle() };
         }
 
-        public static string ReadWStringNullTerminated(this BinaryReader r, int capacity = 32) {
-            List<byte> bytes = new List<byte>();
-            while (r.PeekChar() != 0x00) {
-                bytes.Add(r.ReadByte());
-                bytes.Add(r.ReadByte());
+        public static string ReadWStringNullTerminated(this BinaryReader r) {
+            long pos = r.BaseStream.Position;
+            int length = 0;
+            while (r.ReadUInt16() != 0) {
+                length += 2;
             }
-            return Encoding.Unicode.GetString(bytes.ToArray());
+            r.BaseStream.Seek(pos, SeekOrigin.Begin);
+            return Encoding.Unicode.GetString(r.ReadBytes(length));
         }
     }
 
