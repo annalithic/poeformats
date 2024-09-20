@@ -19,6 +19,7 @@ namespace PoeFormats {
             }
         }
 
+
         public T[] GetArray<T>(int[] indices, string dat = null) where T : Row, new() {
             T[] rows = new T[indices.Length];
             for(int i = 0; i < indices.Length; i++) {

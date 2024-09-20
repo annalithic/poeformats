@@ -17,7 +17,7 @@ namespace PoeFormats {
                     if (r.ReadUInt64() == 0xbbbbbbbbbbbbbbbb) break;
                     rowWidth++;
                 }
-
+                /*
                 r.BaseStream.Seek(4, SeekOrigin.Begin);
                 rows = new byte[rowCount][];
                 for (int i = 0; i < rowCount; i++) {
@@ -25,6 +25,7 @@ namespace PoeFormats {
                 }
 
                 varying = r.ReadBytes((int)r.BaseStream.Length - rowWidth * rowCount - 4);
+                */
             }
         }
     }
