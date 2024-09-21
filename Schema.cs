@@ -27,6 +27,31 @@ namespace PoeFormats {
             public Type type;
             public string references;
             public bool isEnum;
+            public int offset;
+
+            public int Size() {
+                if(array) {
+                    return 16;
+                }
+                switch (type) {
+                    case Type.@bool: 
+                        return 1;
+
+                    case Type.i32:
+                    case Type.f32:
+                    case Type.Enum:
+                        return 4;
+
+                    case Type.@string:
+                    case Type.Row:
+                        return 8;
+
+                    case Type.rid:
+                        return 16;
+
+                    default: return 0;
+                }
+            }
 
             public override string ToString() {
                 if(references != null) {
@@ -71,8 +96,9 @@ namespace PoeFormats {
                 }
             }
 
-            public Column(string name, string columnType) {
+            public Column(string name, string columnType, int offset = 0) {
                 this.name = name;
+                this.offset = offset;
                 if (columnType.StartsWith('[')) {
                     array = true;
                     columnType = columnType.Substring(1, columnType.Length - 2);
@@ -97,8 +123,8 @@ namespace PoeFormats {
         }
 
 
-        Dictionary<string, Column[]> schema;
-        Dictionary<string, Enumeration> enums;
+        public Dictionary<string, Column[]> schema;
+        public Dictionary<string, Enumeration> enums;
 
         public Schema(string schemaPath) {
             schema = new Dictionary<string, Column[]>();
@@ -160,6 +186,8 @@ namespace PoeFormats {
                     string table = GetNextToken(r);
                     List<Column> columns = new List<Column>();
                     List<string> attributes = new List<string>();
+                    int offset = 0;
+
                     token = GetNextToken(r);
                     while (token != "{") {
                         attributes.Add(token);
@@ -171,7 +199,9 @@ namespace PoeFormats {
                             string column = token.Substring(0, token.Length - 1);
                             string columnType = GetNextToken(r);
                             //TODO column attributes go here
-                            columns.Add(new Column(column, columnType));
+                            Column c = new Column(column, columnType, offset);
+                            columns.Add(c);
+                            offset += c.Size();
                         }
                     }
                     schema[table] = columns.ToArray();

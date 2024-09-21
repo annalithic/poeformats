@@ -1,12 +1,13 @@
 ﻿using PoeFormats.Util;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace PoeFormats {
     public class Dat {
 
         public int rowCount;
         public int rowWidth;
-        public byte[][] rows;
+        public byte[] data;
         public byte[] varying;
 
         public Dat(string path) {
@@ -17,17 +18,70 @@ namespace PoeFormats {
                     if (r.ReadUInt64() == 0xbbbbbbbbbbbbbbbb) break;
                     rowWidth++;
                 }
-                /*
+                
                 r.BaseStream.Seek(4, SeekOrigin.Begin);
-                rows = new byte[rowCount][];
-                for (int i = 0; i < rowCount; i++) {
-                    rows[i] = r.ReadBytes(rowWidth);
-                }
+                data = r.ReadBytes(rowCount * rowWidth);
 
                 varying = r.ReadBytes((int)r.BaseStream.Length - rowWidth * rowCount - 4);
-                */
+                
             }
         }
+
+        public string[] ColumnInt(int offset) {
+            string[] values = new string[rowCount];
+            if(offset + 4 > rowWidth) {
+                for (int i = 0; i < rowCount; i++) {
+                    values[i] = "OOB";
+                }
+            } else {
+                for (int i = 0; i < rowCount; i++) {
+                    values[i] = BitConverter.ToInt32(data, offset + rowWidth * i).ToString();
+                }
+            }
+
+            return values;
+        }
+
+        public string[] ColumnFloat(int offset) {
+            string[] values = new string[rowCount];
+            if (offset + 4 > rowWidth) {
+                for (int i = 0; i < rowCount; i++) {
+                    values[i] = "OOB";
+                }
+            } else {
+                for (int i = 0; i < rowCount; i++) {
+                    values[i] = BitConverter.ToSingle(data, offset + rowWidth * i).ToString();
+                }
+            }
+            return values;
+        }
+
+
+
+        public string[] ColumnString(int offset) {
+            string[] values = new string[rowCount];
+            if (offset + 8 > rowWidth) {
+                for (int i = 0; i < rowCount; i++) {
+                    values[i] = "OOB";
+                }
+            }
+            for (int i = 0; i < rowCount; i++) {
+                int strOffset = BitConverter.ToInt32(data, offset + rowWidth * i);
+                values[i] = ReadWStringNullTerminated(varying, strOffset);
+            }
+            
+            return values;
+        }
+
+        static string ReadWStringNullTerminated(byte[] d, int offset) {
+            int length = 0;
+            while (d[offset + length] != 0) {
+                length += 2;
+            }
+            return Encoding.Unicode.GetString(new ReadOnlySpan<byte>(d, offset, length));
+        }
+
+
     }
 
     public class DatReader : IDisposable {
