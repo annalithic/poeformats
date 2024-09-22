@@ -27,6 +27,110 @@ namespace PoeFormats {
             }
         }
 
+        public string[] Column(Schema.Column column) {
+            string[] values = new string[rowCount];
+            int size = column.Size();
+            int offset = column.offset;
+
+            if (column.offset + column.Size() > rowWidth) {
+                for (int i = 0; i < rowCount; i++) {
+                    values[i] = "OOB";
+                }
+                return values;
+            }
+            if(column.array) {
+                for (int row = 0; row < rowCount; row++) {
+                    int count = BitConverter.ToInt32(data, offset + rowWidth * row);
+                    int varyingOffset = BitConverter.ToInt32(data, offset + rowWidth * row + 8);
+                    StringBuilder s = new StringBuilder("[");
+                    switch (column.type) {
+                        case Schema.Column.Type.i32:
+                            for (int i = 0; i < count; i++) {
+                                s.Append(BitConverter.ToInt32(varying, varyingOffset + i * column.TypeSize()).ToString());
+                                s.Append(", ");
+                            }
+                            break;
+                        case Schema.Column.Type.rid:
+                        case Schema.Column.Type.Row:
+                        case Schema.Column.Type.Enum: //TODO ENUM REF
+                            for (int i = 0; i < count; i++) {
+                                int val = BitConverter.ToInt32(varying, varyingOffset + i * column.TypeSize());
+                                s.Append(val == -16843010 ? "null" : val.ToString());
+                                s.Append(", ");
+                            }
+                            break;
+
+                        case Schema.Column.Type.f32:
+                            for (int i = 0; i < count; i++) {
+                                s.Append(BitConverter.ToSingle(varying, varyingOffset + i * 4).ToString());
+                                s.Append(", ");
+                            }
+                            break;
+                        case Schema.Column.Type.@bool:
+                            for (int i = 0; i < count; i++) {
+                                s.Append(varying[varyingOffset + i] == 0 ? "False, " : "True, ");
+                            }
+                            break;
+                        case Schema.Column.Type.@string:
+                            for (int i = 0; i < count; i++) {
+                                int strOffset = BitConverter.ToInt32(varying, varyingOffset + i * column.TypeSize());
+                                s.Append(ReadWStringNullTerminated(varying, strOffset));
+                                s.Append(", ");
+                            }
+                            break;
+                        case Schema.Column.Type.Unknown:
+                            s.Append("UNKNOWN ARRAY TYPE");
+                            break;
+                    }
+                    if(s.Length > 2) s.Remove(s.Length - 2, 2);
+                    s.Append(']');
+                    values[row] = s.ToString();
+
+                }
+
+
+            } else {
+                switch (column.type) {
+                    case Schema.Column.Type.i32:
+                        for (int i = 0; i < rowCount; i++) {
+                            values[i] = BitConverter.ToInt32(data, offset + rowWidth * i).ToString();
+                        }
+                        break;
+                    case Schema.Column.Type.Enum: //TODO ENUM REF
+                    case Schema.Column.Type.rid:
+                    case Schema.Column.Type.Row:
+                        for (int i = 0; i < rowCount; i++) {
+                            int val = BitConverter.ToInt32(data, offset + rowWidth * i);
+                            values[i] = val == -16843010 ? "null" : val.ToString();
+                        }
+                        break;
+                    case Schema.Column.Type.f32:
+                        for (int i = 0; i < rowCount; i++) {
+                            values[i] = BitConverter.ToSingle(data, offset + rowWidth * i).ToString();
+                        }
+                        break;
+                    case Schema.Column.Type.@bool:
+                        for (int i = 0; i < rowCount; i++) {
+                            values[i] = data[offset + rowWidth * i] == 0 ? "False" : "True";
+                        }
+                        break;
+                    case Schema.Column.Type.@string:
+                        for (int i = 0; i < rowCount; i++) {
+                            int strOffset = BitConverter.ToInt32(data, offset + rowWidth * i);
+                            values[i] = ReadWStringNullTerminated(varying, strOffset);
+                        }
+                        break;
+                    case Schema.Column.Type.Unknown:
+                        for (int i = 0; i < rowCount; i++) {
+                            values[i] = "UNKNOWN ROW TYPE";
+                        }
+                        break;
+                }
+            }
+
+            return values;
+        }
+
         public string[] ColumnInt(int offset) {
             string[] values = new string[rowCount];
             if(offset + 4 > rowWidth) {
@@ -56,6 +160,7 @@ namespace PoeFormats {
             return values;
         }
 
+        
 
 
         public string[] ColumnString(int offset) {

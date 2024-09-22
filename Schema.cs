@@ -29,12 +29,9 @@ namespace PoeFormats {
             public bool isEnum;
             public int offset;
 
-            public int Size() {
-                if(array) {
-                    return 16;
-                }
+            public int TypeSize() {
                 switch (type) {
-                    case Type.@bool: 
+                    case Type.@bool:
                         return 1;
 
                     case Type.i32:
@@ -51,6 +48,13 @@ namespace PoeFormats {
 
                     default: return 0;
                 }
+            }
+
+            public int Size() {
+                if(array) {
+                    return 16;
+                }
+                return TypeSize();
             }
 
             public override string ToString() {
@@ -96,7 +100,7 @@ namespace PoeFormats {
                 }
             }
 
-            public Column(string name, string columnType, int offset = 0) {
+            public Column(string name, string columnType, string tableName, int offset = 0) {
                 this.name = name;
                 this.offset = offset;
                 if (columnType.StartsWith('[')) {
@@ -115,9 +119,8 @@ namespace PoeFormats {
                     case "rid":
                         type = Type.rid; break;
                     default:
-                        type = Type.rid;
+                        type = columnType == tableName ? Type.Row : Type.rid;
                         references = columnType; break;
-
                 }
             }
         }
@@ -199,7 +202,7 @@ namespace PoeFormats {
                             string column = token.Substring(0, token.Length - 1);
                             string columnType = GetNextToken(r);
                             //TODO column attributes go here
-                            Column c = new Column(column, columnType, offset);
+                            Column c = new Column(column, columnType, table, offset);
                             columns.Add(c);
                             offset += c.Size();
                         }
