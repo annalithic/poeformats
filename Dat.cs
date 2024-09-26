@@ -1,6 +1,8 @@
 ﻿using PoeFormats.Util;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.IO;
+using System;
 
 namespace PoeFormats {
     public class Dat {

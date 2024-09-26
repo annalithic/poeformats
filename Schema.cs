@@ -1,7 +1,11 @@
 ﻿using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
-using System.Data;
 using System.Text;
+using System.IO;
+using System.Collections.Generic;
+using System;
+using PoeFormats.Util;
+using PoeFormats.Rows;
 
 namespace PoeFormats {
     public class Schema {
@@ -177,30 +181,29 @@ namespace PoeFormats {
         }
 
         void ParseGql(string path) {
-            using (TextReader r = new StreamReader(File.OpenRead(path))) {
-                ParseGql(r);
-            }
+            GqlReader r = new GqlReader(File.ReadAllText(path));
+            ParseGql(r);
         }
 
-        void ParseGql(TextReader r) {
-            string token = GetNextToken(r);
+        void ParseGql(GqlReader r) {
+            string token = r.GetNextToken();
             while(token != null) {
                 if (token == "type") {
-                    string table = GetNextToken(r);
+                    string table = r.GetNextToken();
                     List<Column> columns = new List<Column>();
                     List<string> attributes = new List<string>();
                     int offset = 0;
 
-                    token = GetNextToken(r);
+                    token = r.GetNextToken();
                     while (token != "{") {
                         attributes.Add(token);
-                        token = GetNextToken(r);
+                        token = r.GetNextToken();
                     }
                     while (token != "}") {
-                        token = GetNextToken(r);
+                        token = r.GetNextToken();
                         if (token[token.Length - 1] == ':') {
                             string column = token.Substring(0, token.Length - 1);
-                            string columnType = GetNextToken(r);
+                            string columnType = r.GetNextToken();
                             //TODO column attributes go here
                             Column c = new Column(column, columnType, table, offset);
                             columns.Add(c);
@@ -209,41 +212,86 @@ namespace PoeFormats {
                     }
                     schema[table] = columns.ToArray();
                 } else if (token == "enum") {
-                    string enumName = GetNextToken(r);
-                    int indexing = GetNextToken(r) == "@indexing(first: 1)" ? 1 : 0;
+                    string enumName = r.GetNextToken();
+                    int indexing = r.GetNextToken() == "@indexing(first: 1)" ? 1 : 0;
                     while (token != "{") {
-                        token = GetNextToken(r);
+                        token = r.GetNextToken();
                     }
-                    token = GetNextToken(r);
+                    token = r.GetNextToken();
                     List<string> enumValues = new List<string>();
                     while (token != "}") {
                         enumValues.Add(token);
-                        token = GetNextToken(r);
+                        token = r.GetNextToken();
                     }
                     enums[enumName] = new Enumeration() { indexing = indexing, values = enumValues.ToArray() };
 
                 }
-                token = GetNextToken(r);
+                token = r.GetNextToken();
             }
         }
 
-        //TODO some room for optimization
-        string GetNextToken(TextReader r) {
-            StringBuilder s = new StringBuilder();
-            bool paren = false;
-            int c = r.Read();
-            while(char.IsWhiteSpace((char)c)) {
-                c = r.Read();
+        
+        public static Dictionary<string, string> SplitGqlTypes(string path) {
+            Dictionary<string, string> types = new Dictionary<string, string>();
+            string s = File.ReadAllText(path);
+            GqlReader r = new GqlReader(s);
+            string token = r.GetNextToken();
+            while(token != null) {
+                if (token == "type" || token == "enum") {
+                    int tableStart = r.wordStart;
+                    string table = r.GetNextToken();
+                    while (token != "}") {
+                        token = r.GetNextToken();
+                    }
+                    int tableEnd = r.wordEnd;
+                    types[table] = s.Substring(tableStart, tableEnd - tableStart);
+                }
+                token = r.GetNextToken();
             }
-            if (c == -1) return null;
-            do {
-                s.Append((char)c);
-                c = r.Read();
-                if (paren && c == ')') paren = false;
-                else if (c == '(') paren = true;
-            } while (c != -1 && (!char.IsWhiteSpace((char)c) || paren));
-            return s.ToString();
+            return types;
         }
+        
+
+        public class GqlReader {
+            public int wordStart;
+            public int wordEnd;
+            string s;
+            int i;
+
+            public GqlReader(string s) {
+                this.s = s;
+                i = 0;
+            }
+
+
+            //TODO some room for optimization
+            public string GetNextToken() {
+                i++;
+                while(i < s.Length) {
+                    if (char.IsWhiteSpace(s[i])) i++;
+                    else break;
+                }
+                if (i == s.Length) return null;
+                wordStart = i;
+
+                bool paren = false;
+                bool quote = false;
+                while (i < s.Length) {
+                    char c = s[i];
+
+                    if (c == '"') quote = !quote;
+                    if (paren && c == ')') 
+                        paren = false;
+                    else if (c == '(') 
+                        paren = true;
+                    if (char.IsWhiteSpace(c) && !paren && !quote) break;
+                    i++;
+                }
+                wordEnd = i;
+                return s.Substring(wordStart, wordEnd - wordStart);
+            }
+        }
+
 
         void WriteVariable(string columnName, string type, TextWriter w, List<string> readLines, bool array = false) {
             if (array) {
