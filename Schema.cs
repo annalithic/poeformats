@@ -231,8 +231,16 @@ namespace PoeFormats {
         }
 
         
-        public static Dictionary<string, string> SplitGqlTypes(string path) {
-            Dictionary<string, string> types = new Dictionary<string, string>();
+        public static Dictionary<string, string> SplitGqlTypes(string path, Dictionary<string, string> types = null) {
+            if(types == null) types = new Dictionary<string, string>();
+
+            if (!path.EndsWith(".gql")) {
+                foreach(string gqlPath in Directory.EnumerateFiles(path, "*.gql")) {
+                    SplitGqlTypes(gqlPath, types);
+                    
+                }
+                return types;
+            }
             string s = File.ReadAllText(path);
             GqlReader r = new GqlReader(s);
             string token = r.GetNextToken();
