@@ -149,6 +149,18 @@ namespace PoeFormats {
                 }
 
             }
+            //convert enum rids
+            foreach(var table in schema.Values) {
+                int offetAdjust = 0;
+                for (int i = 0; i < table.Length; i++) {
+                    Column col = table[i];
+                    col.offset += offetAdjust;
+                    if (col.type == Column.Type.rid && col.references != null && enums.ContainsKey(col.references)) {
+                        col.type = Column.Type.Enum;
+                        offetAdjust -= 12;
+                    }
+                }
+            }
 
         }
 
