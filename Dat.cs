@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.IO;
 using System;
+using System.Collections.Generic;
 
 namespace PoeFormats {
     public class Dat {
@@ -29,7 +30,11 @@ namespace PoeFormats {
             }
         }
 
-        public string[] Column(Schema.Column column) {
+        public ReadOnlySpan<byte> Row(int i) {
+            return new ReadOnlySpan<byte>(data, i * rowWidth, rowWidth);
+        }
+
+        public string[] Column(Schema.Column column, Dictionary<string, string[]> rowIds = null) {
             string[] values = new string[rowCount];
             int size = column.TypeSize();
             int offset = column.offset;
@@ -43,10 +48,14 @@ namespace PoeFormats {
             if(column.array) {
                 for (int row = 0; row < rowCount; row++) {
                     int count = BitConverter.ToInt32(data, offset + rowWidth * row);
+                    if (count == 0) {
+                        values[row] = "[]";
+                        continue;
+                    }
                     int varyingOffset = BitConverter.ToInt32(data, offset + rowWidth * row + 8);
                     StringBuilder s = new StringBuilder("[");
                     int end = varyingOffset + count * size;
-                    if (varyingOffset < 0 || end >= varying.Length) {
+                    if (varyingOffset < 0 || end > varying.Length) {
                         s.Append($"OOB {varyingOffset}, ");
                     } else {
                         switch (column.type) {
@@ -61,7 +70,15 @@ namespace PoeFormats {
                             case Schema.Column.Type.Enum: //TODO ENUM REF
                                 for (int i = 0; i < count; i++) {
                                     int val = BitConverter.ToInt32(varying, varyingOffset + i * column.TypeSize());
-                                    s.Append(val == -16843010 ? "null" : val.ToString());
+                                    if (val == -16843010) s.Append("");
+                                    else if (val < 0) s.Append($"OOB {val}");
+                                    else if (column.references != null && rowIds != null && rowIds.ContainsKey(column.references)) {
+                                        var ids = rowIds[column.references];
+                                        if (val >= ids.Length) s.Append($"OOB {val}");
+                                        else s.Append(ids[val]);
+
+                                    }
+                                    else s.Append(val.ToString());
                                     s.Append(", ");
                                 }
                                 break;
@@ -117,7 +134,14 @@ namespace PoeFormats {
                     case Schema.Column.Type.Row:
                         for (int i = 0; i < rowCount; i++) {
                             int val = BitConverter.ToInt32(data, offset + rowWidth * i);
-                            values[i] = val == -16843010 ? "null" : val.ToString();
+                            if (val == -16843010) values[i] = "";
+                            else if (val < 0) values[i] = $"OOB {val}";
+                            else if (column.references != null && rowIds != null && rowIds.ContainsKey(column.references)) {
+                                var ids = rowIds[column.references];
+                                if (val >=  ids.Length) values[i] = $"OOB {val}";
+                                else values[i] = ids[val];
+
+                            } else values[i] = val.ToString();
                         }
                         break;
                     case Schema.Column.Type.f32:
