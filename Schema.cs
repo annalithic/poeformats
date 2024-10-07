@@ -129,6 +129,8 @@ namespace PoeFormats {
                         type = Type.@string; break;
                     case "rid":
                         type = Type.rid; break;
+                    case "_":
+                        type = Type.Unknown; break;
                     default:
                         type = columnType == tableName ? Type.Row : Type.rid;
                         references = columnType; break;
@@ -222,6 +224,11 @@ namespace PoeFormats {
                     }
                     while (token != "}") {
                         token = r.GetNextToken();
+                        //TODO figure out what this whole thing means
+                        if(token.StartsWith("@ref")) {
+                            Column c = columns[columns.Count - 1];
+                            c.type = Column.Type.i32;
+                        }
                         if (token[token.Length - 1] == ':') {
                             string column = token.Substring(0, token.Length - 1);
                             string columnType = r.GetNextToken();
@@ -296,12 +303,17 @@ namespace PoeFormats {
 
             //TODO some room for optimization
             public string GetNextToken() {
-                i++;
+                Start:
                 while(i < s.Length) {
                     if (char.IsWhiteSpace(s[i])) i++;
                     else break;
                 }
                 if (i == s.Length) return null;
+                if (s[i] == '#') {
+                    while (i < s.Length && s[i] != '\n') i++;
+                    goto Start;
+                }
+                
                 wordStart = i;
 
                 bool paren = false;
@@ -318,6 +330,7 @@ namespace PoeFormats {
                     i++;
                 }
                 wordEnd = i;
+                i++;
                 return s.Substring(wordStart, wordEnd - wordStart);
             }
         }
@@ -364,18 +377,23 @@ namespace PoeFormats {
                 foreach(string table in schema.Keys) {
                     List<string> readLines = new List<string>();
                     //if (!table.StartsWith("g")) continue;
-                    if(!datClassNames.ContainsKey(table)) {
+                    if(!datClassNames.ContainsKey(table.ToLower())) {
                         Console.WriteLine("MISSING DAT CLASS NAME " + table);
                         continue;
                     }
-                    string className = datClassNames[table];
+                    string className = datClassNames[table.ToLower()];
 
                     w.WriteLine($"\tpublic class {className} : Row {{");
 
+                    int unkCount = 1;
                     var columns = schema[table];
                     for (int i = 0; i < columns.Length; i++) {
                         var column = columns[i];
                         string columnName = column.name;
+                        if (columnName == "_") {
+                            columnName = $"unk{unkCount}";
+                            unkCount++;
+                        }
                         if(columnName.Length > 1 && char.IsUpper(columnName[0]) && !char.IsUpper(columnName[1]) && !reserved.Contains(columnName)) 
                             columnName = char.ToLower(columnName[0]) + columnName.Substring(1);
                         switch (column.type) {
@@ -388,7 +406,7 @@ namespace PoeFormats {
                             case Column.Type.@string:
                                 WriteVariable(columnName, "String", w, readLines, column.array); break;
                             case Column.Type.rid:
-                                if(column.references == null) {
+                                if(column.references == null || column.references == "_") {
                                     if(column.array) {
                                         readLines.Add($"\t\t\tr.RefArray();");
                                     } else {
@@ -473,7 +491,7 @@ namespace PoeFormats {
                         rowCount = r.ReadInt32();
                     }
 
-                    string className = datClassNames[enumName];
+                    string className = datClassNames[enumName.ToLower()];
 
                     w.WriteLine($"\tpublic enum {className} {{");
                     for(int i = 0; i < e.indexing; i++) {
@@ -481,7 +499,7 @@ namespace PoeFormats {
                     }
                     int unkCount = 1;
                     for (int i = 0; i < rowCount; i++) {
-                        if (e.values.Length > i && e.values[i] != null) {
+                        if (e.values.Length > i && e.values[i] != null && e.values[i] != "_") {
                             w.WriteLine($"\t\t{e.values[i]},");
                         } else {
                             w.WriteLine($"\t\tUNK_{unkCount},");

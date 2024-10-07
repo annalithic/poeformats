@@ -110,7 +110,8 @@ namespace PoeFormats {
                                 }
                                 break;
                             case Schema.Column.Type.Unknown:
-                                s.Append("UNKNOWN ARRAY TYPE");
+                                for(int i = 0; i < count; i++)
+                                    s.Append("?, ");
                                 break;
                         }
                     }
