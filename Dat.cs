@@ -54,7 +54,7 @@ namespace PoeFormats {
                     }
                     int varyingOffset = BitConverter.ToInt32(data, offset + rowWidth * row + 8);
                     StringBuilder s = new StringBuilder("[");
-                    int end = varyingOffset + count * size;
+                    long end = varyingOffset + (long)count * size;
                     if (varyingOffset < 0 || end > varying.Length) {
                         s.Append($"OOB {varyingOffset}, ");
                     } else {
@@ -228,7 +228,7 @@ namespace PoeFormats {
             return values;
         }
 
-        static string ReadWStringNullTerminated(byte[] d, int offset) {
+        public static string ReadWStringNullTerminated(byte[] d, int offset) {
             int length = 0;
             while (d[offset + length] != 0) {
                 length += 2;

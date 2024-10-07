@@ -26,6 +26,7 @@ namespace PoeFormats {
                 rid,
                 Row,
                 Enum,
+                Byte,
                 Unknown
             }
             public Type type;
@@ -36,6 +37,7 @@ namespace PoeFormats {
             public int TypeSize() {
                 switch (type) {
                     case Type.@bool:
+                    case Type.Byte:
                         return 1;
 
                     case Type.i32:
@@ -67,6 +69,11 @@ namespace PoeFormats {
                 } else {
                     return array ? $"{name}: [{type}]" : $"{name}: {type}";
                 }
+            }
+
+            public Column(int offset) {
+                type = Type.Byte;
+                this.offset = offset;
             }
 
             public Column(JObject o, ref int unkCount) {
@@ -197,11 +204,13 @@ namespace PoeFormats {
             ParseGql(r);
         }
 
-        void ParseGql(GqlReader r) {
+        //the return is kinda funky
+        public string ParseGql(GqlReader r) {
+            string table = null;
             string token = r.GetNextToken();
             while(token != null) {
                 if (token == "type") {
-                    string table = r.GetNextToken();
+                    table = r.GetNextToken();
                     List<Column> columns = new List<Column>();
                     List<string> attributes = new List<string>();
                     int offset = 0;
@@ -240,6 +249,7 @@ namespace PoeFormats {
                 }
                 token = r.GetNextToken();
             }
+            return table;
         }
 
         
