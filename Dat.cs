@@ -152,7 +152,8 @@ namespace PoeFormats {
                         break;
                     case Schema.Column.Type.@bool:
                         for (int i = 0; i < rowCount; i++) {
-                            values[i] = data[offset + rowWidth * i] == 0 ? "False" : "True";
+                            byte b = data[offset + rowWidth * i];
+                            values[i] = b > 1 ? "!!!" : b == 0 ? "False" : "True";
                         }
                         break;
                     case Schema.Column.Type.@string:
@@ -178,6 +179,7 @@ namespace PoeFormats {
 
         string CleanString(string s) {
             if (s.IndexOf("\r\n") != -1) s = s.Replace("\r\n", " ");
+            if (s.IndexOf('\n') != -1) s = s.Replace("\n", " ");
             if (s.IndexOf('%') != -1) s = s.Replace("%", "%%");
             return s;
         }
@@ -233,6 +235,7 @@ namespace PoeFormats {
             int length = 0;
             while (d[offset + length] != 0) {
                 length += 2;
+                if (offset + length >= d.Length) return "NON NULL TERMINATED STRING";
             }
             return Encoding.Unicode.GetString(new ReadOnlySpan<byte>(d, offset, length));
         }

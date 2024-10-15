@@ -141,10 +141,12 @@ namespace PoeFormats {
 
         public Dictionary<string, Column[]> schema;
         public Dictionary<string, Enumeration> enums;
+        public Dictionary<string, string> tableFiles;
 
         public Schema(string schemaPath) {
             schema = new Dictionary<string, Column[]>();
             enums = new Dictionary<string, Enumeration>();
+            tableFiles = new Dictionary<string, string>();
             if (Directory.Exists(schemaPath)) 
                 foreach(string path in Directory.EnumerateFiles(schemaPath, "*.gql"))
                     ParseGql(path);
@@ -203,11 +205,11 @@ namespace PoeFormats {
 
         void ParseGql(string path) {
             GqlReader r = new GqlReader(File.ReadAllText(path));
-            ParseGql(r);
+            ParseGql(r, Path.GetFileNameWithoutExtension(path));
         }
 
         //the return is kinda funky
-        public string ParseGql(GqlReader r) {
+        public string ParseGql(GqlReader r, string file = null) {
             string table = null;
             string token = r.GetNextToken();
             while(token != null) {
@@ -228,6 +230,7 @@ namespace PoeFormats {
                         if(token.StartsWith("@ref")) {
                             Column c = columns[columns.Count - 1];
                             c.type = Column.Type.i32;
+                            offset -= 12;
                         }
                         if (token[token.Length - 1] == ':') {
                             string column = token.Substring(0, token.Length - 1);
@@ -238,6 +241,7 @@ namespace PoeFormats {
                             offset += c.Size();
                         }
                     }
+                    if (file != null) tableFiles[table] = file;
                     schema[table] = columns.ToArray();
                 } else if (token == "enum") {
                     string enumName = r.GetNextToken();
@@ -251,6 +255,7 @@ namespace PoeFormats {
                         enumValues.Add(token);
                         token = r.GetNextToken();
                     }
+                    if (file != null) tableFiles[enumName] = file;
                     enums[enumName] = new Enumeration() { indexing = indexing, values = enumValues.ToArray() };
 
                 }
