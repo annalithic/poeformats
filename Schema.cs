@@ -243,6 +243,7 @@ namespace PoeFormats {
                     }
                     if (file != null) tableFiles[table] = file;
                     schema[table] = columns.ToArray();
+                    schema[table.ToLower()] = schema[table];
                 } else if (token == "enum") {
                     string enumName = r.GetNextToken();
                     int indexing = r.GetNextToken() == "@indexing(first: 1)" ? 1 : 0;

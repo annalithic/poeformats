@@ -3,7 +3,7 @@ using System;
 
 namespace PoeFormats {
     public class DatAnalysis {
-        static int arrayMaxCount = 265;
+        public static int arrayMaxCount = 627;
 
         [Flags]
         public enum Error : ushort {
@@ -43,6 +43,27 @@ namespace PoeFormats {
             for (int i = 0; i < dat.rowCount; i++) {
                 Analyse(dat, columnOffset, i, maxRows);
             }
+        }
+
+        public Error GetError(Schema.Column column) {
+            if (column.array) {
+                switch (column.type) {
+                    case (Schema.Column.Type.Unknown): return isArray;
+                    case (Schema.Column.Type.i32): return isIntArray;
+                    case (Schema.Column.Type.f32): return isFloatArray;
+                    case (Schema.Column.Type.@string): return isStringArray;
+                    case (Schema.Column.Type.rid): return isRefArray;
+                }
+            } else {
+                switch (column.type) {
+                    case (Schema.Column.Type.@bool): return isBool;
+                    case (Schema.Column.Type.i32): return isInt;
+                    case (Schema.Column.Type.f32): return isFloat;
+                    case (Schema.Column.Type.@string): return isString;
+                    case (Schema.Column.Type.rid): return isRef;
+                }
+            }
+            return Error.NONE;
         }
 
         static Error AnalyseFloat(float f) {
