@@ -170,8 +170,8 @@ namespace PoeFormats {
                         isRefArray = isRefArray | Error.OFFSET_TOO_BIG;
                     } else {
                         for (int i = 0; i < arrayCount; i++) {
-                            long lower = BitConverter.ToInt64(varying, intArrayOffset);
-                            long upper = BitConverter.ToInt64(varying, intArrayOffset + 8);
+                            long lower = BitConverter.ToInt64(varying, intArrayOffset + i * 16);
+                            long upper = BitConverter.ToInt64(varying, intArrayOffset + i * 16 + 8);
 
                             Error refArrayResult = AnalyseRef(lower, upper, maxRows);
                             isRefArray = isRefArray | refArrayResult;
