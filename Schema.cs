@@ -57,17 +57,21 @@ namespace PoeFormats {
             }
 
             public int Size() {
-                if(array) {
+                if (array) {
                     return 16;
                 }
                 return TypeSize();
             }
 
             public override string ToString() {
-                if(references != null) {
-                    return array ? $"{name}: [{references}]" : $"{name}: {references}";
+                return array ? $"{name}: {TypeName()}" : $"{name}: {TypeName()}";
+            }
+
+            public string TypeName() {
+                if (references != null) {
+                    return array ? $"[{references}]" : references;
                 } else {
-                    return array ? $"{name}: [{type}]" : $"{name}: {type}";
+                    return array ? $"[{type}]" : type.ToString();
                 }
             }
 
