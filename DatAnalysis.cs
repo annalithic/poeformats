@@ -48,7 +48,7 @@ namespace PoeFormats {
         public Error GetError(Schema.Column column) {
             if (column.array) {
                 switch (column.type) {
-                    case (Schema.Column.Type.Unknown): return isArray;
+                    case (Schema.Column.Type._): return isArray;
                     case (Schema.Column.Type.i32): return isIntArray;
                     case (Schema.Column.Type.f32): return isFloatArray;
                     case (Schema.Column.Type.@string): return isStringArray;

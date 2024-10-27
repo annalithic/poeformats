@@ -13,7 +13,44 @@ namespace PoeFormats {
         public class Enumeration {
             public int indexing;
             public string[] values;
+            public string file;
         }
+
+        public class Table {
+            public string name;
+            public string file;
+            public string[] attributes;
+            public Column[] columns;
+
+            public Table(string file, string name, Column[] columns, string[] attributes = null) {
+                this.file = file;
+                this.name = name;
+                this.columns = columns;
+                this.attributes = attributes;
+            }
+
+            public string ToGQL() {
+                StringBuilder s = new StringBuilder("type ");
+                s.Append(name);
+                for(int i = 0; i < attributes.Length; i++) {
+                    s.Append(" ");
+                    s.Append(attributes[i]);
+                }
+                s.Append(" {");
+                for (int i = 0; i < columns.Length; i++) {
+                    var column = columns[i];
+                    if (column.description != null) {
+                        s.Append("\r\n  ");
+                        s.Append(column.description);
+                    }
+                    s.Append("\r\n  ");
+                    s.Append(column.ToString());
+                }
+                s.Append("\r\n}");
+                return s.ToString();
+            }
+        }
+
 
         public class Column {
             public string name;
@@ -27,12 +64,14 @@ namespace PoeFormats {
                 Row,
                 Enum,
                 Byte,
-                Unknown
+                _
             }
             public Type type;
             public string references;
             public bool isEnum;
             public int offset;
+            public string[] attributes;
+            public string description;
 
             public int TypeSize() {
                 switch (type) {
@@ -64,7 +103,15 @@ namespace PoeFormats {
             }
 
             public override string ToString() {
-                return array ? $"{name}: {TypeName()}" : $"{name}: {TypeName()}";
+                if(attributes.Length > 0) {
+                    StringBuilder s = new StringBuilder(name);
+                    s.Append(": "); s.Append(TypeName());
+                    for (int i = 0; i < attributes.Length; i++) {
+                        s.Append(" "); s.Append(attributes[i]);
+                    }
+                    return s.ToString();
+                }
+                return $"{name}: {TypeName()}";
             }
 
             public string TypeName() {
@@ -111,7 +158,7 @@ namespace PoeFormats {
                     case "row":
                         type = Type.Row; break;
                     default:
-                        type = Type.Unknown; break;
+                        type = Type._; break;
                 }
             }
 
@@ -134,7 +181,7 @@ namespace PoeFormats {
                     case "rid":
                         type = Type.rid; break;
                     case "_":
-                        type = Type.Unknown; break;
+                        type = Type._; break;
                     default:
                         type = columnType == tableName ? Type.Row : Type.rid;
                         references = columnType; break;
@@ -143,14 +190,31 @@ namespace PoeFormats {
         }
 
 
-        public Dictionary<string, Column[]> schema;
+        public Dictionary<string, Table> tables;
         public Dictionary<string, Enumeration> enums;
-        public Dictionary<string, string> tableFiles;
+        public Dictionary<string, string> lowerToTitleCase;
+
+        public bool TryGetTable(string name, out Table table) {
+            if (lowerToTitleCase.ContainsKey(name)) name = lowerToTitleCase[name];
+            if (tables.ContainsKey(name)) {
+                table = tables[name];
+                return true;
+            }
+            table = null;
+            return false;
+        }
+
+        public Table GetTable(string name) {
+            if (lowerToTitleCase.ContainsKey(name)) name = lowerToTitleCase[name];
+            if (tables.ContainsKey(name)) return tables[name];
+            return null;
+        }
 
         public Schema(string schemaPath) {
-            schema = new Dictionary<string, Column[]>();
+            tables = new Dictionary<string, Table>();
             enums = new Dictionary<string, Enumeration>();
-            tableFiles = new Dictionary<string, string>();
+            lowerToTitleCase = new Dictionary<string, string>();
+
             if (Directory.Exists(schemaPath)) 
                 foreach(string path in Directory.EnumerateFiles(schemaPath, "*.gql"))
                     ParseGql(path);
@@ -165,10 +229,11 @@ namespace PoeFormats {
 
             }
             //convert enum rids
-            foreach(var table in schema.Values) {
+            foreach(var table in tables.Values) {
                 int offetAdjust = 0;
-                for (int i = 0; i < table.Length; i++) {
-                    Column col = table[i];
+                var columns = table.columns;
+                for (int i = 0; i < columns.Length; i++) {
+                    Column col = columns[i];
                     col.offset += offetAdjust;
                     if (col.type == Column.Type.rid && col.references != null && enums.ContainsKey(col.references)) {
                         col.type = Column.Type.Enum;
@@ -180,6 +245,7 @@ namespace PoeFormats {
         }
 
         void ParseJson(string path) {
+            string filename = Path.GetFileNameWithoutExtension(path);
             using (StreamReader reader = File.OpenText(path)) {
                 JObject o = (JObject)JToken.ReadFrom(new JsonTextReader(reader));
                 foreach (JObject table in o["tables"].Value<JArray>()) {
@@ -189,7 +255,8 @@ namespace PoeFormats {
                     for (int i = 0; i < columns.Length; i++) {
                         columns[i] = new Column((JObject)c[i], ref unkCount);
                     }
-                    schema[table["name"].Value<string>().ToLower()] = columns;
+                    string tableName = table["name"].Value<string>().ToLower();
+                    tables[tableName] = new Table(filename, tableName, columns);
                     //should we keep capitalization in dat names? I cant think of a reason
                 }
                 foreach (JObject enumeration in o["enumerations"].Value<JArray>()) {
@@ -228,26 +295,54 @@ namespace PoeFormats {
                         attributes.Add(token);
                         token = r.GetNextToken();
                     }
+                    token = r.GetNextToken();
+                    Column currentColumn = null;
+                    List<string> currentAttributes = new List<string>();
+                    bool hasRefAttribute = false;
+                    string nextDescription = null;
                     while (token != "}") {
-                        token = r.GetNextToken();
-                        //TODO figure out what this whole thing means
-                        if(token.StartsWith("@ref")) {
-                            Column c = columns[columns.Count - 1];
-                            c.type = Column.Type.i32;
-                            offset -= 12;
-                        }
                         if (token[token.Length - 1] == ':') {
+                            if(currentColumn != null) {
+                                currentColumn.attributes = currentAttributes.ToArray();
+                                currentAttributes.Clear();
+                                if(hasRefAttribute) {
+                                    hasRefAttribute = false;
+                                    currentColumn.type = Column.Type.i32;
+                                }
+
+                                columns.Add(currentColumn);
+                                offset += currentColumn.Size();
+                            }
                             string column = token.Substring(0, token.Length - 1);
                             string columnType = r.GetNextToken();
-                            //TODO column attributes go here
-                            Column c = new Column(column, columnType, table, offset);
-                            columns.Add(c);
-                            offset += c.Size();
+                            currentColumn = new Column(column, columnType, table, offset);
+                            if (nextDescription != null) {
+                                currentColumn.description = nextDescription;
+                                nextDescription = null;
+                            }
+                        } else {
+                            if (token.StartsWith('"')) nextDescription = token;
+                            else {
+                                if (token.StartsWith("@ref")) hasRefAttribute = true;
+                                currentAttributes.Add(token);
+                            }
                         }
+                        token = r.GetNextToken();
                     }
-                    if (file != null) tableFiles[table] = file;
-                    schema[table] = columns.ToArray();
-                    schema[table.ToLower()] = schema[table];
+                    if (currentColumn != null) {
+                        currentColumn.attributes = currentAttributes.ToArray();
+                        if (hasRefAttribute) {
+                            hasRefAttribute = false;
+                            currentColumn.type = Column.Type.i32;
+                        }
+                        columns.Add(currentColumn);
+                        offset += currentColumn.Size();
+                    }
+                    tables[table] = new Table(file, table, columns.ToArray(), attributes.ToArray());
+                    lowerToTitleCase[table.ToLower()] = table;
+                    //schema[table.ToLower()] = schema[table];
+
+
                 } else if (token == "enum") {
                     string enumName = r.GetNextToken();
                     int indexing = r.GetNextToken() == "@indexing(first: 1)" ? 1 : 0;
@@ -260,10 +355,12 @@ namespace PoeFormats {
                         enumValues.Add(token);
                         token = r.GetNextToken();
                     }
-                    if (file != null) tableFiles[enumName] = file;
-                    enums[enumName] = new Enumeration() { indexing = indexing, values = enumValues.ToArray() };
+                    enums[enumName] = new Enumeration() { file = file, indexing = indexing, values = enumValues.ToArray() };
+                    lowerToTitleCase[enumName.ToLower()] = enumName;
 
                 }
+
+
                 token = r.GetNextToken();
             }
             return table;
@@ -319,26 +416,32 @@ namespace PoeFormats {
                     else break;
                 }
                 if (i == s.Length) return null;
-                if (s[i] == '#') {
-                    while (i < s.Length && s[i] != '\n') i++;
-                    goto Start;
-                }
+
                 
                 wordStart = i;
+                if (s[i] == '#') {
+                    while (i < s.Length && s[i] != '\n') i++;
+                    i--;
+                } else if(s[i] == '"' && s[i + 1] == '"' && s[i] == '"') { //the triple quote multiline comment that only shows up once lol
+                    i += 3;
+                    while (!(s[i] == '"' && s[i + 1] == '"' && s[i] == '"')) i++;
+                    i += 3;
+                } else {
+                    bool paren = false;
+                    bool quote = false;
+                    while (i < s.Length) {
+                        char c = s[i];
 
-                bool paren = false;
-                bool quote = false;
-                while (i < s.Length) {
-                    char c = s[i];
-
-                    if (c == '"') quote = !quote;
-                    if (paren && c == ')') 
-                        paren = false;
-                    else if (c == '(') 
-                        paren = true;
-                    if (char.IsWhiteSpace(c) && !paren && !quote) break;
-                    i++;
+                        if (c == '"') quote = !quote;
+                        if (paren && c == ')')
+                            paren = false;
+                        else if (c == '(')
+                            paren = true;
+                        if (char.IsWhiteSpace(c) && !paren && !quote) break;
+                        i++;
+                    }
                 }
+
                 wordEnd = i;
                 i++;
                 return s.Substring(wordStart, wordEnd - wordStart);
@@ -369,7 +472,7 @@ namespace PoeFormats {
             }
             foreach(string path in Directory.EnumerateFiles(datFolder, "*.dat64")) {
                 string datName = Path.GetFileNameWithoutExtension(path);
-                if (!schema.ContainsKey(datName)) continue;
+                if (!tables.ContainsKey(datName)) continue;
                 Console.WriteLine($"GetAll<Rows.{datClassNames[datName]}>();");
             }
         }
@@ -384,7 +487,7 @@ namespace PoeFormats {
 
             using (TextWriter w = new StreamWriter(File.Create(@"C:\temp\Rows.cs"))) {
                 w.WriteLine("namespace PoeFormats.Rows {"); w.WriteLine();
-                foreach(string table in schema.Keys) {
+                foreach(string table in tables.Keys) {
                     List<string> readLines = new List<string>();
                     //if (!table.StartsWith("g")) continue;
                     if(!datClassNames.ContainsKey(table.ToLower())) {
@@ -396,7 +499,7 @@ namespace PoeFormats {
                     w.WriteLine($"\tpublic class {className} : Row {{");
 
                     int unkCount = 1;
-                    var columns = schema[table];
+                    var columns = tables[table].columns;
                     for (int i = 0; i < columns.Length; i++) {
                         var column = columns[i];
                         string columnName = column.name;

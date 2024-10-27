@@ -109,7 +109,7 @@ namespace PoeFormats {
                                     
                                 }
                                 break;
-                            case Schema.Column.Type.Unknown:
+                            case Schema.Column.Type._:
                                 for(int i = 0; i < count; i++)
                                     s.Append("?, ");
                                 break;
@@ -166,7 +166,7 @@ namespace PoeFormats {
                             }
                         }
                         break;
-                    case Schema.Column.Type.Unknown:
+                    case Schema.Column.Type._:
                         for (int i = 0; i < rowCount; i++) {
                             values[i] = "UNKNOWN ROW TYPE";
                         }
