@@ -30,6 +30,10 @@ namespace PoeFormats {
             }
 
             public string ToGQL() {
+                return ToGQL(columns);
+            }
+
+            public string ToGQL(Column[] cols) {
                 StringBuilder s = new StringBuilder("type ");
                 s.Append(name);
                 for(int i = 0; i < attributes.Length; i++) {
@@ -37,8 +41,8 @@ namespace PoeFormats {
                     s.Append(attributes[i]);
                 }
                 s.Append(" {");
-                for (int i = 0; i < columns.Length; i++) {
-                    var column = columns[i];
+                for (int i = 0; i < cols.Length; i++) {
+                    var column = cols[i];
                     if (column.description != null) {
                         s.Append("\r\n  ");
                         s.Append(column.description);
@@ -103,7 +107,7 @@ namespace PoeFormats {
             }
 
             public override string ToString() {
-                if(attributes.Length > 0) {
+                if(attributes != null && attributes.Length > 0) {
                     StringBuilder s = new StringBuilder(name);
                     s.Append(": "); s.Append(TypeName());
                     for (int i = 0; i < attributes.Length; i++) {
@@ -186,6 +190,13 @@ namespace PoeFormats {
                         type = columnType == tableName ? Type.Row : Type.rid;
                         references = columnType; break;
                 }
+            }
+
+            public Column(string name, Column.Type type, int offset, bool array) {
+                this.name = name;
+                this.type = type;
+                this.offset = offset;
+                this.array = array;
             }
         }
 
