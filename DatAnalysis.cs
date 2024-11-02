@@ -1,5 +1,6 @@
 ﻿using PoeFormats;
 using System;
+using System.Collections.Generic;
 
 namespace PoeFormats {
     public class DatAnalysis {
@@ -74,15 +75,20 @@ namespace PoeFormats {
             return Error.NONE;
         }
 
-        static Error AnalyseString(byte[] offsetLocation, byte[] varying, int offset) {
-            long stringOffset = BitConverter.ToInt64(offsetLocation, offset);
-            if (stringOffset < 8)
+        static Error AnalyseString(long offset, byte[] varying) {
+            if (offset < 8)
                 return Error.OFFSET_TOO_SMALL;
-            if (stringOffset + 1 >= varying.Length)
+            if (offset + 1 >= varying.Length)
                 return Error.OFFSET_TOO_BIG;
-            if (stringOffset % 2 == 1)
+            if (offset % 2 == 1)
                 return Error.OFFSET_NOT_EVEN;
             return Error.NONE;
+        }
+
+        static Error AnalyseRef(byte[] data, int offset, int maxRows) {
+            long lower = BitConverter.ToInt64(data, offset);
+            long upper = BitConverter.ToInt64(data, offset + 8);
+            return AnalyseRef(lower, upper, maxRows);
         }
 
         static Error AnalyseRef(long lower, long upper, int maxRows) {
@@ -95,6 +101,69 @@ namespace PoeFormats {
             if (lower > maxRows)
                 return Error.VALUE_TOO_BIG;
             return Error.NONE;
+        }
+
+
+        //todo how to combine with other analyse method
+        public static Error AnalyseColumn(Dat dat, Schema.Column column, int maxRows) {
+            Error e = Error.NONE;
+            int distToEnd = dat.rowWidth - column.offset;
+            if (distToEnd < column.Size()) return Error.OOB;
+            if(column.array) {
+                for(int i = 0; i < dat.rowCount; i++) {
+                    long count = BitConverter.ToInt64(dat.data, dat.rowWidth * i + column.offset);
+                    long offset = BitConverter.ToInt64(dat.data, dat.rowWidth * i + column.offset + 8);
+                    if (count < 0) e = e | Error.COUNT_TOO_SMALL;
+                    else if (count > arrayMaxCount) e = e | Error.COUNT_TOO_BIG;
+                    else if (offset < 0) e = e | Error.OFFSET_TOO_SMALL;
+                    else if (offset + column.TypeSize() * count > dat.varying.Length) e = e | Error.OFFSET_TOO_BIG;
+                    else {
+                        int intOffset = (int)offset;
+
+                        switch (column.type) {
+                            case Schema.Column.Type.f32:
+                                for(int a = 0; a < count; a++) {
+                                    e = e | AnalyseFloat(BitConverter.ToSingle(dat.varying, intOffset + a * 4));
+                                }
+                                break;
+                            case Schema.Column.Type.@string:
+                                for (int a = 0; a < count; a++) {
+                                    e = e | AnalyseString(BitConverter.ToInt64(dat.varying, intOffset + a * 8), dat.varying);
+                                }
+                                break;
+                            case Schema.Column.Type.rid:
+                                for (int a = 0; a < count; a++) {
+                                    e = e | AnalyseRef(dat.varying, intOffset + a * 16, maxRows);
+                                }
+                                break;
+                        }
+                    }
+                }
+            } else {
+                switch(column.type) {
+                    case Schema.Column.Type.@bool:
+                        for(int i = 0; i < dat.rowCount; i++) {
+                            if (dat.Row(i)[column.offset] > 1) return Error.VALUE_TOO_BIG;
+                        }
+                        break;
+                    case Schema.Column.Type.f32:
+                        for (int i = 0; i < dat.rowCount; i++) {
+                            e = e | AnalyseFloat(BitConverter.ToSingle(dat.data, dat.rowWidth * i + column.offset));
+                        }
+                        break;
+                    case Schema.Column.Type.@string:
+                        for (int i = 0; i < dat.rowCount; i++) {
+                            e = e | AnalyseString(BitConverter.ToInt64(dat.data, dat.rowWidth * i + column.offset), dat.varying);
+                        }
+                        break;
+                    case Schema.Column.Type.rid:
+                        for (int i = 0; i < dat.rowCount; i++) {
+                            e = e | AnalyseRef(dat.data, dat.rowWidth * i + column.offset, maxRows);
+                        }
+                        break;
+                }
+            }
+            return e;
         }
 
         void Analyse(Dat dat, int columnOffset, int row, int maxRows) {
@@ -120,7 +189,7 @@ namespace PoeFormats {
             if (distToEnd < 8) {
                 isString = Error.OOB;
             } else {
-                isString = isString | AnalyseString(data, varying, offset);
+                isString = isString | AnalyseString(BitConverter.ToInt64(data, offset), varying);
             }
 
             if (distToEnd < 16) {
@@ -162,7 +231,7 @@ namespace PoeFormats {
                         isStringArray = isStringArray | Error.OFFSET_TOO_BIG;
                     } else {
                         for (int i = 0; i < arrayCount; i++) {
-                            isStringArray = isStringArray | AnalyseString(varying, varying, intArrayOffset + i * 8);
+                            isStringArray = isStringArray | AnalyseString(BitConverter.ToInt64(varying, intArrayOffset + i * 8), varying);
                         }
                     }
 
