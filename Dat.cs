@@ -65,6 +65,12 @@ namespace PoeFormats {
                                     s.Append(", ");
                                 }
                                 break;
+                            case Schema.Column.Type.i16:
+                                for (int i = 0; i < count; i++) {
+                                    s.Append(BitConverter.ToUInt16(varying, varyingOffset + i * column.TypeSize()).ToString());
+                                    s.Append(", ");
+                                }
+                                break;
                             case Schema.Column.Type.rid:
                             case Schema.Column.Type.Row:
                             case Schema.Column.Type.Enum: //TODO ENUM REF
@@ -128,6 +134,11 @@ namespace PoeFormats {
                     case Schema.Column.Type.i32:
                         for (int i = 0; i < rowCount; i++) {
                             values[i] = BitConverter.ToInt32(data, offset + rowWidth * i).ToString();
+                        }
+                        break;
+                    case Schema.Column.Type.i16:
+                        for (int i = 0; i < rowCount; i++) {
+                            values[i] = BitConverter.ToUInt16(data, offset + rowWidth * i).ToString();
                         }
                         break;
                     case Schema.Column.Type.Enum: //TODO ENUM REF
@@ -303,6 +314,23 @@ namespace PoeFormats {
             r.BaseStream.Seek(varyingOffset + offset, SeekOrigin.Begin);
             for (int i = 0; i < count; i++) {
                 values[i] = r.ReadInt32();
+            }
+            r.BaseStream.Seek(currentPos, SeekOrigin.Begin);
+            return values;
+        }
+
+        public ushort Short() {
+            return r.ReadUInt16();
+        }
+
+        public ushort[] ShortArray() {
+            int count = (int)r.ReadInt64();
+            long offset = r.ReadInt64();
+            ushort[] values = new ushort[count];
+            var currentPos = r.BaseStream.Position;
+            r.BaseStream.Seek(varyingOffset + offset, SeekOrigin.Begin);
+            for (int i = 0; i < count; i++) {
+                values[i] = r.ReadUInt16();
             }
             r.BaseStream.Seek(currentPos, SeekOrigin.Begin);
             return values;

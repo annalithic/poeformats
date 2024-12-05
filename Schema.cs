@@ -11,6 +11,7 @@ namespace PoeFormats {
     public class Schema {
 
         public class Enumeration {
+            public string name;
             public int indexing;
             public string[] values;
             public string file;
@@ -68,6 +69,7 @@ namespace PoeFormats {
                 Row,
                 Enum,
                 Byte,
+                i16,
                 _
             }
             public Type type;
@@ -82,7 +84,8 @@ namespace PoeFormats {
                     case Type.@bool:
                     case Type.Byte:
                         return 1;
-
+                    case Type.i16:
+                        return 2;
                     case Type.i32:
                     case Type.f32:
                     case Type.Enum:
@@ -141,6 +144,8 @@ namespace PoeFormats {
                 switch (o["type"].Value<string>()) {
                     case "bool":
                         type = Type.@bool; break;
+                    case "i16":
+                        type = Type.i16; break;
                     case "i32":
                         type = Type.i32; break;
                     case "f32":
@@ -176,6 +181,8 @@ namespace PoeFormats {
                 switch (columnType) {
                     case "bool":
                         type = Type.@bool; break;
+                    case "i16":
+                        type = Type.i16; break;
                     case "i32":
                         type = Type.i32; break;
                     case "f32":
@@ -204,6 +211,16 @@ namespace PoeFormats {
         public Dictionary<string, Table> tables;
         public Dictionary<string, Enumeration> enums;
         public Dictionary<string, string> lowerToTitleCase;
+
+        public bool TryGetEnum(string name, out Enumeration e) {
+            if (lowerToTitleCase.ContainsKey(name)) name = lowerToTitleCase[name];
+            if (enums.ContainsKey(name)) {
+                e = enums[name];
+                return true;
+            }
+            e = null;
+            return false;
+        }
 
         public bool TryGetTable(string name, out Table table) {
             if (lowerToTitleCase.ContainsKey(name)) name = lowerToTitleCase[name];
@@ -366,7 +383,7 @@ namespace PoeFormats {
                         enumValues.Add(token);
                         token = r.GetNextToken();
                     }
-                    enums[enumName] = new Enumeration() { file = file, indexing = indexing, values = enumValues.ToArray() };
+                    enums[enumName] = new Enumeration() { name = enumName, file = file, indexing = indexing, values = enumValues.ToArray() };
                     lowerToTitleCase[enumName.ToLower()] = enumName;
 
                 }
@@ -523,6 +540,8 @@ namespace PoeFormats {
                         switch (column.type) {
                             case Column.Type.@bool:
                                 WriteVariable(columnName, "Bool",   w, readLines); break;
+                            case Column.Type.i16:
+                                WriteVariable(columnName, "Short", w, readLines, column.array); break;
                             case Column.Type.i32:
                                 WriteVariable(columnName, "Int",    w, readLines, column.array); break;
                             case Column.Type.f32:
