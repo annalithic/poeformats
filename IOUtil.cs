@@ -72,6 +72,11 @@ namespace PoeFormats.Util {
             a = int.Parse(words[words.Length - 2]); b = int.Parse(words[words.Length - 1]);
         }
 
+        public static void ReadValueInt(string line, out int a, out int b)
+        {
+            string[] words = line.Split(' ');
+            a = int.Parse(words[words.Length - 2]); b = int.Parse(words[words.Length - 1]);
+        }
 
 
         public static string[] SplitQuotes(this string s) {

@@ -23,7 +23,9 @@ namespace PoeFormats {
 
             using (TextReader r = new StreamReader(File.OpenRead(Path.Combine(basePath, path)), System.Text.Encoding.Unicode)) {
                 version = r.ReadValueInt();
-                r.ReadValueInt(out sizeX, out sizeY);
+                string line = r.ReadLine();
+                if (line.StartsWith("SourceScene")) line = r.ReadLine();
+                TextReaderEx.ReadValueInt(line, out sizeX, out sizeY);
                 tileMeshRoot = r.ReadValueString();
                 if(r.Peek() == 'G')
                     groundMask = r.ReadValueString();

@@ -87,7 +87,11 @@ namespace PoeFormats {
                     uvs[i * 2] = r.ReadUInt16();
                     uvs[i * 2 + 1] = r.ReadUInt16();
                 }
-                if (vertexFormat == 57 || vertexFormat == 58) {
+                if (vertexFormat == 57 || vertexFormat == 58 || vertexFormat == 59) {
+                    r.Seek(4);
+                }
+                if(vertexFormat == 59)
+                {
                     r.Seek(4);
                 }
                 if(vertexFormat == 60 || vertexFormat == 61 || vertexFormat == 62) {

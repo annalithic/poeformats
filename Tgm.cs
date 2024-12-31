@@ -72,6 +72,8 @@ namespace PoeFormats {
                     unk3 = r.ReadInt16();
                     model = new PoeModel(r);
 
+                    //if (version == 14) r.Seek(4 * model.meshes.Length);
+
                     modelExtraData = new TgmModelExtraData[model.shapeCount];
                     for (int i = 0; i < model.shapeCount; i++) {
                         modelExtraData[i] = new TgmModelExtraData(r, version, true);

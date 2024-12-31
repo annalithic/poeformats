@@ -11,6 +11,7 @@ namespace PoeFormats {
     public class Schema {
 
         public class Enumeration {
+            public string name;
             public int indexing;
             public string[] values;
             public string file;
@@ -205,6 +206,16 @@ namespace PoeFormats {
         public Dictionary<string, Enumeration> enums;
         public Dictionary<string, string> lowerToTitleCase;
 
+        public bool TryGetEnum(string name, out Enumeration e) {
+            if (lowerToTitleCase.ContainsKey(name)) name = lowerToTitleCase[name];
+            if (enums.ContainsKey(name)) {
+                e = enums[name];
+                return true;
+            }
+            e = null;
+            return false;
+        }
+
         public bool TryGetTable(string name, out Table table) {
             if (lowerToTitleCase.ContainsKey(name)) name = lowerToTitleCase[name];
             if (tables.ContainsKey(name)) {
@@ -366,7 +377,7 @@ namespace PoeFormats {
                         enumValues.Add(token);
                         token = r.GetNextToken();
                     }
-                    enums[enumName] = new Enumeration() { file = file, indexing = indexing, values = enumValues.ToArray() };
+                    enums[enumName] = new Enumeration() { name = enumName, file = file, indexing = indexing, values = enumValues.ToArray() };
                     lowerToTitleCase[enumName.ToLower()] = enumName;
 
                 }
@@ -426,7 +437,7 @@ namespace PoeFormats {
                     if (char.IsWhiteSpace(s[i])) i++;
                     else break;
                 }
-                if (i == s.Length) return null;
+                if (i >= s.Length) return null;
 
                 
                 wordStart = i;
