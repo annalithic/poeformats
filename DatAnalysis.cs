@@ -23,6 +23,8 @@ namespace PoeFormats {
 
             UPPER_BYTES_NOT_ZERO = 128,
             OFFSET_NOT_EVEN = 256,
+
+            VALUES_NOT_UNIQUE = 512,
         }
 
         public Error isBool;
@@ -30,6 +32,7 @@ namespace PoeFormats {
         public Error isFloat;
         public Error isString;
         public Error isRef;
+        public Error isHash16;
 
         public Error isArray;
         public Error isIntArray;
@@ -41,8 +44,9 @@ namespace PoeFormats {
         public int maxRefArray;
 
         public DatAnalysis(Dat dat, int columnOffset, int maxRows) {
+            HashSet<ushort> hashValues = new HashSet<ushort>(dat.rowCount);
             for (int i = 0; i < dat.rowCount; i++) {
-                Analyse(dat, columnOffset, i, maxRows);
+                Analyse(dat, columnOffset, i, maxRows, hashValues);
             }
         }
 
@@ -62,6 +66,7 @@ namespace PoeFormats {
                     case (Schema.Column.Type.f32): return isFloat;
                     case (Schema.Column.Type.@string): return isString;
                     case (Schema.Column.Type.rid): return isRef;
+                    case (Schema.Column.Type.i16): return isHash16;
                 }
             }
             return Error.NONE;
@@ -161,12 +166,20 @@ namespace PoeFormats {
                             e = e | AnalyseRef(dat.data, dat.rowWidth * i + column.offset, maxRows);
                         }
                         break;
+                    case Schema.Column.Type.i16:
+                        HashSet<ushort> hashes = new HashSet<ushort>(dat.rowCount);
+                        for (int i = 0; i < dat.rowCount; i++) {
+                            ushort hash = BitConverter.ToUInt16(dat.data, dat.rowWidth * i + column.offset);
+                            if (hashes.Contains(hash)) return Error.VALUES_NOT_UNIQUE;
+                            hashes.Add(hash);
+                        }
+                        break;
                 }
             }
             return e;
         }
 
-        void Analyse(Dat dat, int columnOffset, int row, int maxRows) {
+        void Analyse(Dat dat, int columnOffset, int row, int maxRows, HashSet<ushort> hashValues = null) {
             byte[] data = dat.data;
             byte[] varying = dat.varying;
             int rowWidth = dat.rowWidth;
@@ -177,6 +190,14 @@ namespace PoeFormats {
                 isBool = Error.OOB;
             } else if (data[offset] > 1) {
                 isBool = isBool | Error.VALUE_TOO_BIG;
+            }
+
+            if(distToEnd < 2) {
+                isHash16 = Error.OOB;
+            } else if (hashValues != null) {
+                ushort shortValue = BitConverter.ToUInt16(data, offset);
+                if (hashValues.Contains(shortValue)) isHash16 = Error.VALUES_NOT_UNIQUE;
+                hashValues.Add(shortValue);
             }
 
             if (distToEnd < 4) {

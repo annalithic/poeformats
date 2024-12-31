@@ -69,6 +69,7 @@ namespace PoeFormats {
                 Row,
                 Enum,
                 Byte,
+                i16,
                 _
             }
             public Type type;
@@ -83,7 +84,8 @@ namespace PoeFormats {
                     case Type.@bool:
                     case Type.Byte:
                         return 1;
-
+                    case Type.i16:
+                        return 2;
                     case Type.i32:
                     case Type.f32:
                     case Type.Enum:
@@ -142,6 +144,8 @@ namespace PoeFormats {
                 switch (o["type"].Value<string>()) {
                     case "bool":
                         type = Type.@bool; break;
+                    case "i16":
+                        type = Type.i16; break;
                     case "i32":
                         type = Type.i32; break;
                     case "f32":
@@ -177,6 +181,8 @@ namespace PoeFormats {
                 switch (columnType) {
                     case "bool":
                         type = Type.@bool; break;
+                    case "i16":
+                        type = Type.i16; break;
                     case "i32":
                         type = Type.i32; break;
                     case "f32":
@@ -534,6 +540,8 @@ namespace PoeFormats {
                         switch (column.type) {
                             case Column.Type.@bool:
                                 WriteVariable(columnName, "Bool",   w, readLines); break;
+                            case Column.Type.i16:
+                                WriteVariable(columnName, "Short", w, readLines, column.array); break;
                             case Column.Type.i32:
                                 WriteVariable(columnName, "Int",    w, readLines, column.array); break;
                             case Column.Type.f32:
