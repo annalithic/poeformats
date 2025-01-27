@@ -65,7 +65,7 @@ namespace PoeFormats {
                                     s.Append(", ");
                                 }
                                 break;
-                            case Schema.Column.Type.i16:
+                            case Schema.Column.Type.u16:
                                 for (int i = 0; i < count; i++) {
                                     s.Append(BitConverter.ToUInt16(varying, varyingOffset + i * column.TypeSize()).ToString());
                                     s.Append(", ");
@@ -136,7 +136,7 @@ namespace PoeFormats {
                             values[i] = BitConverter.ToInt32(data, offset + rowWidth * i).ToString();
                         }
                         break;
-                    case Schema.Column.Type.i16:
+                    case Schema.Column.Type.u16:
                         for (int i = 0; i < rowCount; i++) {
                             values[i] = BitConverter.ToUInt16(data, offset + rowWidth * i).ToString();
                         }

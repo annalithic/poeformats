@@ -69,7 +69,7 @@ namespace PoeFormats {
                 Row,
                 Enum,
                 Byte,
-                i16,
+                u16,
                 _
             }
             public Type type;
@@ -84,7 +84,7 @@ namespace PoeFormats {
                     case Type.@bool:
                     case Type.Byte:
                         return 1;
-                    case Type.i16:
+                    case Type.u16:
                         return 2;
                     case Type.i32:
                     case Type.f32:
@@ -144,8 +144,8 @@ namespace PoeFormats {
                 switch (o["type"].Value<string>()) {
                     case "bool":
                         type = Type.@bool; break;
-                    case "i16":
-                        type = Type.i16; break;
+                    case "u16":
+                        type = Type.u16; break;
                     case "i32":
                         type = Type.i32; break;
                     case "f32":
@@ -171,6 +171,7 @@ namespace PoeFormats {
                 }
             }
 
+            //TODO separate unsigned types lol
             public Column(string name, string columnType, string tableName, int offset = 0) {
                 this.name = name;
                 this.offset = offset;
@@ -182,8 +183,10 @@ namespace PoeFormats {
                     case "bool":
                         type = Type.@bool; break;
                     case "i16":
-                        type = Type.i16; break;
+                    case "u16":
+                        type = Type.u16; break;
                     case "i32":
+                    case "u32":
                         type = Type.i32; break;
                     case "f32":
                         type = Type.f32; break;
@@ -243,10 +246,14 @@ namespace PoeFormats {
             enums = new Dictionary<string, Enumeration>();
             lowerToTitleCase = new Dictionary<string, string>();
 
-            if (Directory.Exists(schemaPath)) 
-                foreach(string path in Directory.EnumerateFiles(schemaPath, "*.gql"))
+            if (Directory.Exists(schemaPath)) {
+                foreach (string path in Directory.EnumerateFiles(schemaPath, "*.gql"))
                     ParseGql(path);
-            else if (File.Exists(schemaPath)) {
+                //do subfolders second so they can overwrite
+                foreach (string folder in Directory.EnumerateDirectories(schemaPath))
+                    foreach(string path in Directory.EnumerateFiles(folder, "*.gql", SearchOption.AllDirectories))
+                        ParseGql(path);
+            } else if (File.Exists(schemaPath)) {
                 string ext = Path.GetExtension(schemaPath);
                 if (ext == ".json") {
                     ParseJson(schemaPath);
@@ -540,7 +547,7 @@ namespace PoeFormats {
                         switch (column.type) {
                             case Column.Type.@bool:
                                 WriteVariable(columnName, "Bool",   w, readLines); break;
-                            case Column.Type.i16:
+                            case Column.Type.u16:
                                 WriteVariable(columnName, "Short", w, readLines, column.array); break;
                             case Column.Type.i32:
                                 WriteVariable(columnName, "Int",    w, readLines, column.array); break;
