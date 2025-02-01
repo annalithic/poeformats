@@ -34,7 +34,9 @@ namespace PoeFormats {
                 return ToGQL(columns);
             }
 
-            public string ToGQL(Column[] cols) {
+            public string ToGQL(Column[] cols, bool carriageReturn = true) {
+                string newline = carriageReturn ? "\r\n" : "\n";
+                string newlineIndent = newline + "  ";
                 StringBuilder s = new StringBuilder("type ");
                 s.Append(name);
                 for(int i = 0; i < attributes.Length; i++) {
@@ -45,13 +47,14 @@ namespace PoeFormats {
                 for (int i = 0; i < cols.Length; i++) {
                     var column = cols[i];
                     if (column.description != null) {
-                        s.Append("\r\n  ");
+                        s.Append(newlineIndent);
                         s.Append(column.description);
                     }
-                    s.Append("\r\n  ");
+                    s.Append(newlineIndent);
                     s.Append(column.ToString());
                 }
-                s.Append("\r\n}");
+                s.Append(newline);
+                s.Append('}');
                 return s.ToString();
             }
         }
@@ -78,6 +81,8 @@ namespace PoeFormats {
             public int offset;
             public string[] attributes;
             public string description;
+
+            public bool unique;
 
             public int TypeSize() {
                 switch (type) {
@@ -334,6 +339,7 @@ namespace PoeFormats {
                     Column currentColumn = null;
                     List<string> currentAttributes = new List<string>();
                     bool hasRefAttribute = false;
+                    bool isUnique = false;
                     string nextDescription = null;
                     while (token != "}") {
                         if (token[token.Length - 1] == ':') {
@@ -344,6 +350,8 @@ namespace PoeFormats {
                                     hasRefAttribute = false;
                                     currentColumn.type = Column.Type.i32;
                                 }
+                                currentColumn.unique = isUnique;
+                                isUnique = false;
 
                                 columns.Add(currentColumn);
                                 offset += currentColumn.Size();
@@ -359,6 +367,8 @@ namespace PoeFormats {
                             if (token.StartsWith('"')) nextDescription = token;
                             else {
                                 if (token.StartsWith("@ref")) hasRefAttribute = true;
+                                if (token.StartsWith("@unique")) 
+                                    isUnique = true;
                                 currentAttributes.Add(token);
                             }
                         }
@@ -370,6 +380,7 @@ namespace PoeFormats {
                             hasRefAttribute = false;
                             currentColumn.type = Column.Type.i32;
                         }
+                        currentColumn.unique = isUnique;
                         columns.Add(currentColumn);
                         offset += currentColumn.Size();
                     }

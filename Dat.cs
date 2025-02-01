@@ -34,7 +34,7 @@ namespace PoeFormats {
             return new ReadOnlySpan<byte>(data, i * rowWidth, rowWidth);
         }
 
-        public string[] Column(Schema.Column column, Dictionary<string, string[]> rowIds = null) {
+        public string[] Column(Schema.Column column, string[] refIds = null) {
             string[] values = new string[rowCount];
             int size = column.TypeSize();
             int offset = column.offset;
@@ -78,11 +78,9 @@ namespace PoeFormats {
                                     int val = BitConverter.ToInt32(varying, varyingOffset + i * column.TypeSize());
                                     if (val == -16843010) s.Append("");
                                     else if (val < 0) s.Append($"OOB {val}");
-                                    else if (column.references != null && rowIds != null && rowIds.ContainsKey(column.references)) {
-                                        var ids = rowIds[column.references];
-                                        if (val >= ids.Length) s.Append($"OOB {val}");
-                                        else s.Append(ids[val]);
-
+                                    else if (refIds != null) {
+                                        if (val >= refIds.Length) s.Append($"OOB {val}");
+                                        else s.Append(refIds[val]);
                                     }
                                     else s.Append(val.ToString());
                                     s.Append(", ");
@@ -148,10 +146,9 @@ namespace PoeFormats {
                             int val = BitConverter.ToInt32(data, offset + rowWidth * i);
                             if (val == -16843010) values[i] = "";
                             else if (val < 0) values[i] = $"OOB {val}";
-                            else if (column.references != null && rowIds != null && rowIds.ContainsKey(column.references)) {
-                                var ids = rowIds[column.references];
-                                if (val >=  ids.Length) values[i] = $"OOB {val}";
-                                else values[i] = ids[val];
+                            else if (refIds != null) {
+                                if (val >=  refIds.Length) values[i] = $"OOB {val}";
+                                else values[i] = refIds[val];
 
                             } else values[i] = val.ToString();
                         }

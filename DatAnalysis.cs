@@ -66,7 +66,7 @@ namespace PoeFormats {
                     case (Schema.Column.Type.f32): return isFloat;
                     case (Schema.Column.Type.@string): return isString;
                     case (Schema.Column.Type.rid): return isRef;
-                    case (Schema.Column.Type.i16): return isHash16;
+                    case (Schema.Column.Type.u16): return isHash16;
                 }
             }
             return Error.NONE;
@@ -166,7 +166,7 @@ namespace PoeFormats {
                             e = e | AnalyseRef(dat.data, dat.rowWidth * i + column.offset, maxRows);
                         }
                         break;
-                    case Schema.Column.Type.i16:
+                    case Schema.Column.Type.u16:
                         HashSet<ushort> hashes = new HashSet<ushort>(dat.rowCount);
                         for (int i = 0; i < dat.rowCount; i++) {
                             ushort hash = BitConverter.ToUInt16(dat.data, dat.rowWidth * i + column.offset);
