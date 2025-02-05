@@ -177,7 +177,7 @@ namespace PoeFormats {
             }
 
             //TODO separate unsigned types lol
-            public Column(string name, string columnType, string tableName, int offset = 0) {
+            public Column(string name, string columnType, string tableName, int offset, bool isEnum = false) {
                 this.name = name;
                 this.offset = offset;
                 if (columnType.StartsWith('[')) {
@@ -202,7 +202,7 @@ namespace PoeFormats {
                     case "_":
                         type = Type._; break;
                     default:
-                        type = columnType == tableName ? Type.Row : Type.rid;
+                        type = isEnum ? Type.Enum : columnType == tableName ? Type.Row : Type.rid;
                         references = columnType; break;
                 }
             }
@@ -358,7 +358,8 @@ namespace PoeFormats {
                             }
                             string column = token.Substring(0, token.Length - 1);
                             string columnType = r.GetNextToken();
-                            currentColumn = new Column(column, columnType, table, offset);
+                            bool isEnum = enums.ContainsKey(columnType[0] == '[' ? columnType.Substring(1, columnType.Length - 2) : columnType);
+                            currentColumn = new Column(column, columnType, table, offset, isEnum);
                             if (nextDescription != null) {
                                 currentColumn.description = nextDescription;
                                 nextDescription = null;

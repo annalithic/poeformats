@@ -121,6 +121,7 @@ namespace PoeFormats {
                     }
                     
                     if(s.Length > 2) s.Remove(s.Length - 2, 2);
+                    if (s.Length > 512) s = s.Remove(512, s.Length - 512);
                     s.Append(']');
                     values[row] = s.ToString();
 
