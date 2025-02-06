@@ -524,26 +524,16 @@ namespace PoeFormats {
             }
         }
 
-        public void GenerateCode(string datFolder) {
-            var datClassNames = new Dictionary<string, string>();
-            foreach (string line in File.ReadAllLines(@"F:\Extracted\PathOfExile\datclassnames.txt")) {
-                string[] words = line.Split('\t');
-                datClassNames[words[0]] = words[1];
-            }
+        public void GenerateCode(string datFolder, string codePath) {
 
-
-            using (TextWriter w = new StreamWriter(File.Create(@"C:\temp\Rows.cs"))) {
+            using (TextWriter w = new StreamWriter(File.Create(codePath))) {
                 w.WriteLine("namespace PoeFormats.Rows {"); w.WriteLine();
                 foreach(string table in tables.Keys) {
                     List<string> readLines = new List<string>();
                     //if (!table.StartsWith("g")) continue;
-                    if(!datClassNames.ContainsKey(table.ToLower())) {
-                        Console.WriteLine("MISSING DAT CLASS NAME " + table);
-                        continue;
-                    }
-                    string className = datClassNames[table.ToLower()];
+                    var t = tables[table];
 
-                    w.WriteLine($"\tpublic class {className} : Row {{");
+                    w.WriteLine($"\tpublic class {t.name} : Row {{");
 
                     int unkCount = 1;
                     var columns = tables[table].columns;
@@ -560,7 +550,7 @@ namespace PoeFormats {
                             case Column.Type.@bool:
                                 WriteVariable(columnName, "Bool",   w, readLines); break;
                             case Column.Type.u16:
-                                WriteVariable(columnName, "Short", w, readLines, column.array); break;
+                                WriteVariable(columnName, "UShort", w, readLines, column.array); break;
                             case Column.Type.i32:
                                 WriteVariable(columnName, "Int",    w, readLines, column.array); break;
                             case Column.Type.f32:
@@ -575,16 +565,15 @@ namespace PoeFormats {
                                         readLines.Add($"\t\t\tr.Ref();");
                                     }
                                 } else {
-                                    string references = column.references.ToLower();
-                                    string refClass = datClassNames[references];
+                                    string references = column.references;
                                     
                                     if (column.array) {
-                                        w.WriteLine($"\t\tpublic {refClass}[] {columnName};");
-                                        readLines.Add($"\t\t\t{columnName} = d.GetArray<{refClass}>(r.RefArray());");
+                                        w.WriteLine($"\t\tpublic {references}[] {columnName};");
+                                        readLines.Add($"\t\t\t{columnName} = d.GetArray<{references}>(r.RefArray());");
                                     }
                                     else {
-                                        w.WriteLine($"\t\tpublic {refClass} {columnName};");
-                                        readLines.Add($"\t\t\t{columnName} = d.Get<{refClass}>(r.Ref());");
+                                        w.WriteLine($"\t\tpublic {references} {columnName};");
+                                        readLines.Add($"\t\t\t{columnName} = d.Get<{references}>(r.Ref());");
                                     }
                                     
                                 }
@@ -599,15 +588,14 @@ namespace PoeFormats {
                                     }
                                 }
                                 else {
-                                    string references = column.references.ToLower();
-                                    string refClass = datClassNames[references];
+                                    string references = column.references;
                                     if (column.array) {
-                                        w.WriteLine($"\t\tpublic {refClass}[] {columnName};");
-                                        readLines.Add($"\t\t\t{columnName} = r.EnumArray<{refClass}>();");
+                                        w.WriteLine($"\t\tpublic {references}[] {columnName};");
+                                        readLines.Add($"\t\t\t{columnName} = r.EnumArray<{references}>();");
                                     }
                                     else {
-                                        w.WriteLine($"\t\tpublic {refClass} {columnName};");
-                                        readLines.Add($"\t\t\t{columnName} = r.Enum<{refClass}>();");
+                                        w.WriteLine($"\t\tpublic {references} {columnName};");
+                                        readLines.Add($"\t\t\t{columnName} = r.Enum<{references}>();");
                                     }
 
 
@@ -615,12 +603,12 @@ namespace PoeFormats {
                                 break;
                             case Column.Type.Row:
                                 if (column.array) {
-                                    w.WriteLine($"\t\tpublic {className}[] {columnName};");
-                                    readLines.Add($"\t\t\t{columnName} = d.GetArray<{className}>(r.RowArray());");
+                                    w.WriteLine($"\t\tpublic {t.name}[] {columnName};");
+                                    readLines.Add($"\t\t\t{columnName} = d.GetArray<{t.name}>(r.RowArray());");
                                 }
                                 else {
-                                    w.WriteLine($"\t\tpublic {className} {columnName};");
-                                    readLines.Add($"\t\t\t{columnName} = d.Get<{className}>(r.Row());");
+                                    w.WriteLine($"\t\tpublic {t.name} {columnName};");
+                                    readLines.Add($"\t\t\t{columnName} = d.Get<{t.name}>(r.Row());");
                                 }
                                 break;
                             default:
@@ -645,22 +633,21 @@ namespace PoeFormats {
                     w.WriteLine();
                 }
                 foreach(string enumName in enums.Keys) {
-                    if (!File.Exists(Path.Combine(datFolder, enumName) + ".dat64")) continue;
+
+                    //TODO should overwrite enums with tables when loading but whatever
+                    if (TryGetTable(enumName, out var t)) continue;
+
+                    //if (!File.Exists(Path.Combine(datFolder, enumName) + ".dat64")) continue;
 
                     Enumeration e = enums[enumName];
-                    int rowCount;
-                    using (BinaryReader r = new BinaryReader(File.OpenRead(Path.Combine(datFolder, enumName) + ".dat64"))) {
-                        rowCount = r.ReadInt32();
-                    }
 
-                    string className = datClassNames[enumName.ToLower()];
 
-                    w.WriteLine($"\tpublic enum {className} {{");
+                    w.WriteLine($"\tpublic enum {enumName} {{");
                     for(int i = 0; i < e.indexing; i++) {
                         w.WriteLine($"\t\tINDEXING_{i},");
                     }
                     int unkCount = 1;
-                    for (int i = 0; i < rowCount; i++) {
+                    for (int i = 0; i < e.values.Length; i++) {
                         if (e.values.Length > i && e.values[i] != null && e.values[i] != "_") {
                             w.WriteLine($"\t\t{e.values[i]},");
                         } else {

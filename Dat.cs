@@ -317,7 +317,7 @@ namespace PoeFormats {
             return values;
         }
 
-        public ushort Short() {
+        public ushort UShort() {
             return r.ReadUInt16();
         }
 

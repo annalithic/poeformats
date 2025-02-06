@@ -91,6 +91,7 @@ namespace PoeFormats {
             return blocks[block].values[i];
         }
 
+
         public string GetFirst(string block, string value) {
             if (!blocks.ContainsKey(block)) return null;
             int i = blocks[block].keys.IndexOf(value);
