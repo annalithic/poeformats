@@ -10,7 +10,7 @@ namespace PoeFormats {
 
         int strChars;
 
-        public int unk1;
+        public string inherits;
         public string tgt;
         public string feature;
         public string edgeTypeDown;
@@ -53,37 +53,42 @@ namespace PoeFormats {
                     r.Seek(2);
                 }
 
-                unk1 = r.ReadInt32();
-                tgt = ReadStr(r);
-                feature = ReadStr(r);
-                edgeTypeDown = ReadStr(r);
-                edgeTypeRight = ReadStr(r);
-                edgeTypeUp = ReadStr(r);
-                edgeTypeLeft = ReadStr(r);
-                sizeX = r.ReadByte();
-                sizeY = r.ReadByte();
-                groundTypeDownLeft = ReadStr(r);
-                groundTypeDownRight = ReadStr(r);
-                groundTypeUpRight = ReadStr(r);
-                groundTypeUpLeft = ReadStr(r);
-                unk2 = r.ReadByte();
-                unk3 = r.ReadByte();
-                unk4 = r.ReadByte();
-                unk5 = r.ReadByte();
-                edgeDistDown = r.ReadByte();
-                edgeDistDown2 = r.ReadByte();
-                edgeDistRight = r.ReadByte();
-                edgeDistRight2 = r.ReadByte();
-                edgeDistUp = r.ReadByte();
-                edgeDistUp2 = r.ReadByte();
-                edgeDistLeft = r.ReadByte();
-                edgeDistLeft2 = r.ReadByte();
+                inherits = ReadStr(r);
+                if (inherits != null && inherits.Length > 0) {
+                    tgt = null;
+                    r.Seek(1);
+                } else {
+                    tgt = ReadStr(r);
+                    feature = ReadStr(r);
+                    edgeTypeDown = ReadStr(r);
+                    edgeTypeRight = ReadStr(r);
+                    edgeTypeUp = ReadStr(r);
+                    edgeTypeLeft = ReadStr(r);
+                    sizeX = r.ReadByte();
+                    sizeY = r.ReadByte();
+                    groundTypeDownLeft = ReadStr(r);
+                    groundTypeDownRight = ReadStr(r);
+                    groundTypeUpRight = ReadStr(r);
+                    groundTypeUpLeft = ReadStr(r);
+                    unk2 = r.ReadByte();
+                    unk3 = r.ReadByte();
+                    unk4 = r.ReadByte();
+                    unk5 = r.ReadByte();
+                    edgeDistDown = r.ReadByte();
+                    edgeDistDown2 = r.ReadByte();
+                    edgeDistRight = r.ReadByte();
+                    edgeDistRight2 = r.ReadByte();
+                    edgeDistUp = r.ReadByte();
+                    edgeDistUp2 = r.ReadByte();
+                    edgeDistLeft = r.ReadByte();
+                    edgeDistLeft2 = r.ReadByte();
+                }
             }
         }
 
         string ReadStr(BinaryReader r) {
             int i = r.ReadInt32();
-            Console.WriteLine(i);
+            //Console.WriteLine(i);
             if (i < 0 || i >= strChars) return null;
             var pos = r.BaseStream.Position;
             r.BaseStream.Seek(8 + i * 2, SeekOrigin.Begin);

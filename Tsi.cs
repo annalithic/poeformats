@@ -5,6 +5,9 @@ using System.Collections.Generic;
 
 namespace PoeFormats {
     public class Tsi {
+
+        string path;
+
         public int version;
 
         public bool allowInteriorOverlapFixes;
@@ -65,6 +68,7 @@ namespace PoeFormats {
         public string environmentSectorKey;
         public string environmentSectorValue;
 
+        static char[] whiteSpaceChars = new char[] { ' ', '\t' };
 
         bool Bool(string s) {
             if (s == "1") return true;
@@ -73,6 +77,8 @@ namespace PoeFormats {
         }
 
         public Tsi(string path) {
+            this.path = path;
+
             char[] splitChars = new char[] { ' ', '\t' };
             foreach (string line in File.ReadAllLines(path)) {
                 if (line.StartsWith("//")) continue;
@@ -147,5 +153,72 @@ namespace PoeFormats {
             }
         }
 
+        public IEnumerable<string> GetTiles(string gamePath) {
+            if(tileSet == null) return new string[0];
+
+            string tstPath = path.Replace(Path.GetFileName(path), tileSet);
+            HashSet<string> tiles = new HashSet<string>();
+            
+            foreach (string line in File.ReadAllLines(tstPath)) {
+                if (line.StartsWith("//")) continue;
+                foreach (string word in line.Split(whiteSpaceChars, StringSplitOptions.RemoveEmptyEntries)) {
+                    if (word.EndsWith(".tdt\"")) {
+                        tiles.Add(word.Trim('"'));
+                    }
+                }
+            }
+
+            return tiles;
+
+
+        }
+
+        public IEnumerable<string> GetTileGeometries(string gamePath) { 
+            var tiles = GetTiles(gamePath);
+
+            HashSet<string> tileGeometries = new HashSet<string>();
+
+            foreach (string tdtPath in tiles) {
+                ReadTileGeometry(gamePath, tdtPath, tileGeometries);
+            }
+            return tileGeometries;
+
+        }
+
+        void ReadTileGeometry(string gamePath, string tdtPath, HashSet<string> geometries) {
+            string fullPath = Path.Combine(gamePath, tdtPath.ToLower());
+
+            Tdt tdt = new Tdt(fullPath);
+
+            if (tdt.inherits != null && tdt.inherits.Length > 0) ReadTileGeometry(gamePath, tdt.inherits, geometries);
+
+            if (tdt.tgt != null) {
+                //TODO tdt that extends tdt dont work
+                if (!tdt.tgt.EndsWith(".tgt")) return;
+                foreach (string geom in tdt.tgt.Split(';')) {
+                    geometries.Add(geom);
+                }
+            }
+
+        }
+
+        public Dictionary<string, string> GetMaterialOverrides() {
+            Dictionary<string, string> materialOverrides = new Dictionary<string, string>();
+            if(tileMaterialOverrides == null) return materialOverrides;
+            string tmoPath = path.Replace(Path.GetFileName(path), tileMaterialOverrides);
+            if (!File.Exists(tmoPath)) return null;
+            foreach (string line in File.ReadAllLines(tmoPath)) {
+                if (line.IndexOf("//") != -1) continue; //TODO comment at end of line
+                string[] words = line.Split(whiteSpaceChars, StringSplitOptions.RemoveEmptyEntries);
+                for (int i = 0; i < words.Length - 1; i++) {
+                    if (words[i].EndsWith(".mat\""))
+                        if (words[i + 1].EndsWith(".mat\"")) {
+                        materialOverrides[words[i].Trim('"').Replace('\\', '/')] = words[i + 1].Trim('"').Replace('\\', '/');
+                    }
+                }
+           
+            }
+            return materialOverrides;
+        }
     }
 }
