@@ -148,7 +148,8 @@ namespace PoeFormats {
             modelVersion = r.ReadInt16();
             meshes = new PoeMesh[r.ReadByte()];
             shapeCount = r.ReadUInt16();
-            vertexFormat = r.ReadInt32();
+            vertexFormat = r.ReadByte();
+            r.Seek(3);
             for (int i = 0; i < meshes.Length; i++) {
                 meshes[i] = new PoeMesh(r.ReadInt32(), r.ReadInt32(), shapeCount);
             }

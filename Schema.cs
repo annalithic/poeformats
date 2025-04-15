@@ -339,6 +339,7 @@ namespace PoeFormats {
                     Column currentColumn = null;
                     List<string> currentAttributes = new List<string>();
                     bool hasRefAttribute = false;
+                    bool hasIntervalAttribute = false;
                     bool isUnique = false;
                     string nextDescription = null;
                     while (token != "}") {
@@ -353,8 +354,21 @@ namespace PoeFormats {
                                 currentColumn.unique = isUnique;
                                 isUnique = false;
 
+
                                 columns.Add(currentColumn);
                                 offset += currentColumn.Size();
+
+                                if (hasIntervalAttribute) {
+                                    Column column2 = new Column(offset);
+                                    column2.name = currentColumn.name + "_max";
+                                    column2.type = currentColumn.type;
+                                    column2.offset = offset;
+                                    columns.Add(column2);
+
+                                    currentColumn.name = currentColumn.name + "_min";
+                                    offset += currentColumn.Size();
+                                    hasIntervalAttribute = false;
+                                }
                             }
                             string column = token.Substring(0, token.Length - 1);
                             string columnType = r.GetNextToken();
@@ -368,7 +382,8 @@ namespace PoeFormats {
                             if (token.StartsWith('"')) nextDescription = token;
                             else {
                                 if (token.StartsWith("@ref")) hasRefAttribute = true;
-                                if (token.StartsWith("@unique")) 
+                                else if (token.StartsWith("@interval")) hasIntervalAttribute = true;
+                                else if (token.StartsWith("@unique")) 
                                     isUnique = true;
                                 currentAttributes.Add(token);
                             }
@@ -524,7 +539,18 @@ namespace PoeFormats {
             }
         }
 
+        string GetDatClassName(Dictionary<string, string> classNames, string tableName) {
+            string tableNameLower = tableName.ToLower();
+            if (!classNames.ContainsKey(tableNameLower)) classNames[tableNameLower] = tableName;
+            return classNames[tableNameLower];
+        }
+
         public void GenerateCode(string datFolder, string codePath) {
+            Dictionary<string, string> datClassNames = new Dictionary<string, string>();
+            foreach(string line in File.ReadAllLines(@"F:\Extracted\PathOfExile\datclassnames.txt")) {
+                string[] words = line.Split();
+                datClassNames[words[0]] = words[1];
+            }
 
             using (TextWriter w = new StreamWriter(File.Create(codePath))) {
                 w.WriteLine("namespace PoeFormats.Rows {"); w.WriteLine();
@@ -533,7 +559,8 @@ namespace PoeFormats {
                     //if (!table.StartsWith("g")) continue;
                     var t = tables[table];
 
-                    w.WriteLine($"\tpublic class {t.name} : Row {{");
+                    string className = GetDatClassName(datClassNames, t.name);
+                    w.WriteLine($"\tpublic class {className} : Row {{");
 
                     int unkCount = 1;
                     var columns = tables[table].columns;
@@ -565,7 +592,7 @@ namespace PoeFormats {
                                         readLines.Add($"\t\t\tr.Ref();");
                                     }
                                 } else {
-                                    string references = column.references;
+                                    string references = GetDatClassName(datClassNames, column.references);
                                     
                                     if (column.array) {
                                         w.WriteLine($"\t\tpublic {references}[] {columnName};");
@@ -579,7 +606,7 @@ namespace PoeFormats {
                                 }
                                 break;
                             case Column.Type.Enum:
-                                if (column.references == null) {
+                                if (column.references == null || true) {
                                     if (column.array) {
                                         readLines.Add($"\t\t\tr.IntArray();");
                                     }
@@ -588,7 +615,7 @@ namespace PoeFormats {
                                     }
                                 }
                                 else {
-                                    string references = column.references;
+                                    string references = GetDatClassName(datClassNames, column.references);
                                     if (column.array) {
                                         w.WriteLine($"\t\tpublic {references}[] {columnName};");
                                         readLines.Add($"\t\t\t{columnName} = r.EnumArray<{references}>();");
@@ -603,12 +630,12 @@ namespace PoeFormats {
                                 break;
                             case Column.Type.Row:
                                 if (column.array) {
-                                    w.WriteLine($"\t\tpublic {t.name}[] {columnName};");
-                                    readLines.Add($"\t\t\t{columnName} = d.GetArray<{t.name}>(r.RowArray());");
+                                    w.WriteLine($"\t\tpublic {className}[] {columnName};");
+                                    readLines.Add($"\t\t\t{columnName} = d.GetArray<{className}>(r.RowArray());");
                                 }
                                 else {
-                                    w.WriteLine($"\t\tpublic {t.name} {columnName};");
-                                    readLines.Add($"\t\t\t{columnName} = d.Get<{t.name}>(r.Row());");
+                                    w.WriteLine($"\t\tpublic {className} {columnName};");
+                                    readLines.Add($"\t\t\t{columnName} = d.Get<{className}>(r.Row());");
                                 }
                                 break;
                             default:

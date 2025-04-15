@@ -52,10 +52,16 @@ namespace PoeFormats {
         public AstLight[] lights;
         public AstAnimation[] animations;
 
-        public Ast(string path) : this(new BinaryReader(File.OpenRead(path))) { }
+        public Ast(string path, bool loadTracks = true) : this(new BinaryReader(File.OpenRead(path)), loadTracks) { }
 
-        Ast(BinaryReader r) {
+        Ast(BinaryReader r, bool loadTracks = true) {
             version = r.ReadByte();
+
+            if (version < 8) { 
+                animations = new AstAnimation[0];
+                return;
+            }
+
             bones = new AstBone[r.ReadByte()];
             unk1 = r.ReadByte();
             animations = new AstAnimation[r.ReadByte()];
@@ -89,7 +95,7 @@ namespace PoeFormats {
                 animations[i].unk1 = r.ReadByte();
                 animations[i].framerate = r.ReadByte();
                 animations[i].unk2 = r.ReadByte();
-                if (version > 10) animations[i].version11a = r.ReadByte();
+                if (version > 9) animations[i].version11a = r.ReadByte();
                 byte nameLength = r.ReadByte();
                 int parentNameLength = 0;
                 if (version > 10) parentNameLength = r.ReadByte();
@@ -99,6 +105,7 @@ namespace PoeFormats {
                 animations[i].parent = new string(r.ReadChars(parentNameLength));
             }
 
+            if(!loadTracks) return;
             byte[] payload = Bundle.DecompressBundle(r);
             using (BinaryReader r2 = new BinaryReader(new MemoryStream(payload))) {
                 for (int anim = 0; anim < animations.Length; ++anim) {
