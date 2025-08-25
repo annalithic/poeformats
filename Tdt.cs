@@ -96,5 +96,34 @@ namespace PoeFormats {
             r.BaseStream.Seek(pos, SeekOrigin.Begin);
             return str;
         }
+
+        public void ReadTileGeometry(string gamePath, HashSet<string> geometries) {
+
+            if (inherits != null && inherits.Length > 0) ReadTileGeometry(gamePath, inherits, geometries);
+
+            if (tgt != null) {
+                //TODO tdt that extends tdt dont work
+                if (!tgt.EndsWith(".tgt")) return;
+                foreach (string geom in tgt.Split(';')) {
+                    geometries.Add(geom);
+                }
+            }
+        }
+
+        public static void ReadTileGeometry(string gamePath, string tdtPath, HashSet<string> geometries) {
+            string fullPath = Path.Combine(gamePath, tdtPath.ToLower());
+
+            Tdt tdt = new Tdt(fullPath);
+
+            if (tdt.inherits != null && tdt.inherits.Length > 0) ReadTileGeometry(gamePath, tdt.inherits, geometries);
+
+            if (tdt.tgt != null) {
+                //TODO tdt that extends tdt dont work
+                if (!tdt.tgt.EndsWith(".tgt")) return;
+                foreach (string geom in tdt.tgt.Split(';')) {
+                    geometries.Add(geom);
+                }
+            }
+        }
     }
 }

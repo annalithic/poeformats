@@ -246,7 +246,7 @@ namespace PoeFormats {
             return null;
         }
 
-        public Schema(string schemaPath) {
+        public Schema(string schemaPath, bool poe2 = true) {
             tables = new Dictionary<string, Table>();
             enums = new Dictionary<string, Enumeration>();
             lowerToTitleCase = new Dictionary<string, string>();
@@ -255,9 +255,13 @@ namespace PoeFormats {
                 foreach (string path in Directory.EnumerateFiles(schemaPath, "*.gql"))
                     ParseGql(path);
                 //do subfolders second so they can overwrite
-                foreach (string folder in Directory.EnumerateDirectories(schemaPath))
-                    foreach(string path in Directory.EnumerateFiles(folder, "*.gql", SearchOption.AllDirectories))
-                        ParseGql(path);
+                foreach (string folder in Directory.EnumerateDirectories(schemaPath)) 
+                    if(poe2 || !folder.Contains("poe2"))
+                        foreach (string path in Directory.EnumerateFiles(folder, "*.gql", SearchOption.AllDirectories))
+                            ParseGql(path);
+
+                
+
             } else if (File.Exists(schemaPath)) {
                 string ext = Path.GetExtension(schemaPath);
                 if (ext == ".json") {
@@ -524,7 +528,7 @@ namespace PoeFormats {
         }
 
         
-        HashSet<string> reserved = new HashSet<string>() { "Object", "Override", "Event", "Double" };
+        HashSet<string> reserved = new HashSet<string>() { "Object", "Override", "Event", "Double", "Class", "String" };
 
         public void GenerateGetAllMethod(string datFolder) {
             var datClassNames = new Dictionary<string, string>();
@@ -541,7 +545,11 @@ namespace PoeFormats {
 
         string GetDatClassName(Dictionary<string, string> classNames, string tableName) {
             string tableNameLower = tableName.ToLower();
-            if (!classNames.ContainsKey(tableNameLower)) classNames[tableNameLower] = tableName;
+            if (!classNames.ContainsKey(tableNameLower)) {
+                Console.WriteLine(tableNameLower);
+                classNames[tableNameLower] = tableName;
+            }
+            
             return classNames[tableNameLower];
         }
 

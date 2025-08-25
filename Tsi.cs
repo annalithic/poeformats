@@ -14,7 +14,6 @@ namespace PoeFormats {
         public bool bottomStoreyOverride;
         public bool disableDoors;
         public bool doNotFillOutside;
-        public bool dungeonFillRoomHeightOverride;
         public bool forceOuterGT;
         public bool mergeInsideWalls;
         public bool outerFillHeightOverride;
@@ -25,6 +24,7 @@ namespace PoeFormats {
         public bool useParentMinimapLayer;
 
         public int defaultKillZone;
+        public int dungeonFillRoomHeightOverride;
         public int envMargin;
         public int outerBufferSize;
         public int roofFadeDistanceDownscreen;
@@ -91,6 +91,7 @@ namespace PoeFormats {
                 switch(sp[0]) {
                     case "version": version = int.Parse(sp[1]); break;
                     case "DefaultKillZone": defaultKillZone = int.Parse(sp[1]); break;
+                    case "DungeonFillRoomHeightOverride": dungeonFillRoomHeightOverride = int.Parse(sp[1]); break;
                     case "EnvMargin": envMargin = int.Parse(sp[1]); break;
                     case "OuterBufferSize": outerBufferSize = int.Parse(sp[1]); break;
                     case "RoofFadeDistanceDownscreen": roofFadeDistanceDownscreen = int.Parse(sp[1]); break;
@@ -104,7 +105,6 @@ namespace PoeFormats {
                     case "BottomStoreyOverride": bottomStoreyOverride = Bool(sp[1]); break;
                     case "DisableDoors": disableDoors = Bool(sp[1]); break;
                     case "DoNotFillOutside": doNotFillOutside = Bool(sp[1]); break;
-                    case "DungeonFillRoomHeightOverride": dungeonFillRoomHeightOverride = Bool(sp[1]); break;
                     case "ForceOuterGT": forceOuterGT = Bool(sp[1]); break;
                     case "MergeInsideWalls": mergeInsideWalls = Bool(sp[1]); break;
                     case "OuterFillHeightOverride": outerFillHeightOverride = Bool(sp[1]); break;
@@ -179,28 +179,12 @@ namespace PoeFormats {
             HashSet<string> tileGeometries = new HashSet<string>();
 
             foreach (string tdtPath in tiles) {
-                ReadTileGeometry(gamePath, tdtPath, tileGeometries);
+               Tdt.ReadTileGeometry(gamePath, tdtPath, tileGeometries);
             }
             return tileGeometries;
 
         }
 
-        void ReadTileGeometry(string gamePath, string tdtPath, HashSet<string> geometries) {
-            string fullPath = Path.Combine(gamePath, tdtPath.ToLower());
-
-            Tdt tdt = new Tdt(fullPath);
-
-            if (tdt.inherits != null && tdt.inherits.Length > 0) ReadTileGeometry(gamePath, tdt.inherits, geometries);
-
-            if (tdt.tgt != null) {
-                //TODO tdt that extends tdt dont work
-                if (!tdt.tgt.EndsWith(".tgt")) return;
-                foreach (string geom in tdt.tgt.Split(';')) {
-                    geometries.Add(geom);
-                }
-            }
-
-        }
 
         public Dictionary<string, string> GetMaterialOverrides() {
             Dictionary<string, string> materialOverrides = new Dictionary<string, string>();
