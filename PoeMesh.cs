@@ -35,6 +35,10 @@ namespace PoeFormats {
         public int[] shapeLengths;
         public BoneWeightSortable[][] boneWeights;
 
+        public ushort[] uv2s;
+        public uint[] vcols;
+        public int[] unks;
+
         public PoeMesh() {
         }
 
@@ -69,8 +73,20 @@ namespace PoeFormats {
             //56: XXXX YYYY ZZZZ NNNN TTTT UUVV
             //48: XXXX YYYY ZZZZ NNNN TTTT
 
-            if(vertexFormat == 60 || vertexFormat == 61 || vertexFormat == 62) {
+            if((vertexFormat & 4) > 0) {
                 boneWeights = new BoneWeightSortable[vertCount][];
+            }
+
+            if ((vertexFormat & 1) > 0) {
+                uv2s = new ushort[vertCount * 2];
+            }
+
+            if ((vertexFormat & 2) > 0) {
+                vcols = new uint[vertCount];
+            }
+
+            if ((vertexFormat & 64) > 0) {
+                unks = new int[vertCount];
             }
 
             for (int i = 0; i < vertCount; i++) {
@@ -78,23 +94,17 @@ namespace PoeFormats {
                 verts[i * 3] = r.ReadSingle();
                 verts[i * 3 + 1] = r.ReadSingle();
                 verts[i * 3 + 2] = r.ReadSingle();
-                r.Seek(8);
+                r.Seek(8); //N+T
 
-                if(vertexFormat == 48) {
-                    uvs[i * 2] = 0;
-                    uvs[i * 2 + 1] = 0;
-                } else {
+                if((vertexFormat & 8) > 0) {
                     uvs[i * 2] = r.ReadUInt16();
                     uvs[i * 2 + 1] = r.ReadUInt16();
+                } else {
+                    uvs[i * 2] = 0;
+                    uvs[i * 2 + 1] = 0;
                 }
-                if (vertexFormat == 57 || vertexFormat == 58 || vertexFormat == 59) {
-                    r.Seek(4);
-                }
-                if(vertexFormat == 59)
-                {
-                    r.Seek(4);
-                }
-                if(vertexFormat == 60 || vertexFormat == 61 || vertexFormat == 62) {
+
+                if(boneWeights != null) {
                     boneWeights[i] = new BoneWeightSortable[4];
                     for (int weight = 0; weight < 4; weight++) {
                         boneWeights[i][weight] = new BoneWeightSortable(r.ReadByte());
@@ -103,17 +113,22 @@ namespace PoeFormats {
                         boneWeights[i][weight].weight = r.ReadByte();
                     }
                 }
-                if(vertexFormat == 61 || vertexFormat == 62) {
-                    r.Seek(4);
+                if(uv2s != null) {
+                    uv2s[i * 2] = r.ReadUInt16();
+                    uv2s[i * 2 + 1] = r.ReadUInt16();
                 }
 
-                if(vertexFormat == 120) {
-                    r.Seek(4);
+                if(vcols != null) {
+                    vcols[i] = r.ReadUInt32();
+                }
+
+                if(unks != null) {
+                    unks[i] = r.ReadInt32();
                 }
 
             }
 
-            if(vertexFormat == 120) {
+            if(vertexFormat >= 120) {
                 for(int i = 0; i < shapeOffsets.Length; i++) {
                     r.ReadBBox();
                     r.Seek(12);

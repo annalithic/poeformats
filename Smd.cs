@@ -21,7 +21,7 @@ namespace PoeFormats {
     }
 
     public class Smd {
-        byte version;
+        public byte version;
         public byte unk1;
         public ushort shapeCount;
         public int unk2;

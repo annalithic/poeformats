@@ -60,7 +60,7 @@ namespace PoeFormats {
                 case 1162627398: //FILE
                     return new ChunkFile(r, chunkSize, path);
                 default:
-                    Console.WriteLine("UNKNOWN CHUNK TYPE " + chunkType.ToString());
+                    //Console.WriteLine("UNKNOWN CHUNK TYPE " + chunkType.ToString());
                     return new Chunk();
             }
         }
@@ -70,7 +70,7 @@ namespace PoeFormats {
             using (BinaryReader r = new BinaryReader(File.OpenRead(path))) {
                 {
                     int headerLength = r.ReadInt32();
-                    if (r.ReadInt32() != 1263552327) Console.WriteLine("NOT GGPK");
+                    if (r.ReadInt32() != 1263552327) return;
                     version = r.ReadInt32();
                     offset1 = r.ReadInt64();
                 }
