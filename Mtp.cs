@@ -6,7 +6,7 @@ namespace PoeFormats {
         public string filename;
         public int nameOffset;
         public byte orientation;
-        public byte unk2;
+        public byte textureIndex;
         public byte unk3;
         public byte unk4;
         public int height;
@@ -16,19 +16,35 @@ namespace PoeFormats {
         public float originX;
         public float originY;
 
-        public MinimapImage(BinaryReader r) {
+        public override string ToString() {
+            return filename;
+        }
+
+        public MinimapImage(BinaryReader r, bool newVersion) {
             filename = "";
             nameOffset = r.ReadInt32();
             orientation = r.ReadByte();
-            unk2 = r.ReadByte();
-            unk3 = r.ReadByte();
-            unk4 = r.ReadByte();
-            height = r.ReadInt32();
-            width = r.ReadInt32();
-            leftPadding = r.ReadSingle();
-            topPadding = r.ReadSingle();
-            originX = r.ReadSingle();
-            originY = r.ReadSingle();
+            textureIndex = r.ReadByte();
+            if(newVersion) {
+                unk3 = 0;
+                unk4 = 0;
+                height = r.ReadInt16();
+                width = r.ReadInt16();
+                originY = r.ReadInt16();
+                originX = r.ReadInt16();
+                topPadding = 0;
+                leftPadding = 0;
+                r.BaseStream.Seek(6, SeekOrigin.Current);
+            } else {
+                unk3 = r.ReadByte();
+                unk4 = r.ReadByte();
+                height = r.ReadInt32();
+                width = r.ReadInt32();
+                leftPadding = r.ReadSingle();
+                topPadding = r.ReadSingle();
+                originX = r.ReadSingle();
+                originY = r.ReadSingle();
+            }
         }
     }
 
@@ -40,9 +56,12 @@ namespace PoeFormats {
         public Mtp(string path) {
             this.path = path;
             using (BinaryReader reader = new BinaryReader(File.OpenRead(path))) {
-                reader.BaseStream.Seek(4, SeekOrigin.Begin);
+                int begin = reader.ReadInt32();
+                if (begin == 1) {
+                    reader.BaseStream.Seek(reader.ReadInt32() * 4, SeekOrigin.Current);
+                }
                 images = new MinimapImage[reader.ReadInt32()];
-                for (int i = 0; i < images.Length; i++) images[i] = new MinimapImage(reader);
+                for (int i = 0; i < images.Length; i++) images[i] = new MinimapImage(reader, begin == 1);
                 names = System.Text.Encoding.Unicode.GetString(reader.ReadBytes(reader.ReadInt32() * 2));
                 for(int i = 0; i < images.Length; i++) {
                     string name = names.Substring(images[i].nameOffset);

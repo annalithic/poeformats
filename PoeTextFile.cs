@@ -83,6 +83,15 @@ namespace PoeFormats {
             return new Block();
         }
 
+        public bool TryGetBlock(string blockName, out Block block) {
+            if (blocks.ContainsKey(blockName)) {
+                block = blocks[blockName];
+                return true;
+            }
+            block = null;
+            return false;
+        }
+
         //lastindexof so children override parents
         public string Get(string block, string value) {
             if (!blocks.ContainsKey(block)) return null;

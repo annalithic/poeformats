@@ -36,7 +36,7 @@ namespace PoeFormats {
         public BoneWeightSortable[][] boneWeights;
 
         public ushort[] uv2s;
-        public uint[] vcols;
+        public byte[] vcols;
         public int[] unks;
 
         public PoeMesh() {
@@ -82,7 +82,7 @@ namespace PoeFormats {
             }
 
             if ((vertexFormat & 2) > 0) {
-                vcols = new uint[vertCount];
+                vcols = new byte[vertCount * 4];
             }
 
             if ((vertexFormat & 64) > 0) {
@@ -119,7 +119,10 @@ namespace PoeFormats {
                 }
 
                 if(vcols != null) {
-                    vcols[i] = r.ReadUInt32();
+                    vcols[i * 4] = r.ReadByte();
+                    vcols[i * 4 + 1] = r.ReadByte();
+                    vcols[i * 4 + 2] = r.ReadByte();
+                    vcols[i * 4 + 3] = r.ReadByte();
                 }
 
                 if(unks != null) {
